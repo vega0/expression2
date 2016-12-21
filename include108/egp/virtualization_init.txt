@@ -1,0 +1,136 @@
+@inputs Egp_User:entity W:wirelink
+
+@persist [Display Buttons]:table
+@persist E_ID1
+
+#constants
+@persist EGP_CLICK_TIMER
+@persist [EGP_BUTTON_NORMAL_COLOR EGP_BUTTON_HOVER_COLOR EGP_BUTTON_CLICK_COLOR]:vector
+@persist EGP_BUTTON_CLICK_SOUND:string
+
+#func
+@persist Egp_StateBack:table
+
+#dynamic 
+@persist EgpUses Cursor:vector2
+
+if(first())
+{
+    #include "include/egp/utils"
+    #include "include/indexmanager"
+    #include "include/debugtools"
+    
+    function void initialize(W_:wirelink, User:entity)
+    {
+        W = W_
+        Egp_User = User
+    }
+    ############# TABLE FUNCTIONS ######################
+    function table table:setcolor(Color:vector)
+    {
+        W:egpColor(This["id", number], Color)
+        return This   
+    }
+    
+    function table table:settext(Text:string)
+    {
+        W:egpSetText(This["id", number], Text)   
+        return This
+    }
+    
+    ####################################################
+    function table wirelink:label(Parent:table, Text:string, Pos:vector2, Size)
+    {
+        local Lbl = table()
+        local Id = e_alloc()
+        Lbl["id", number] = Id
+        Lbl["text", string] = Text
+        Lbl["parent", table] = Parent  
+        This:egpText(Id, Text, Pos)
+        This:egpSize(Id, Size)
+        This:egpAlign(Id, 1, 1)
+        if(Parent:count() > 0)
+        {
+            This:egpParent(Id, Parent["id", number])
+        }   
+        return Lbl
+    }
+    
+    function table wirelink:button(Parent:table,Ident:string, Name:string, Pos:vector2, Size:vector2)
+    {
+        local Btn = table()
+        local Id1 = e_alloc()
+        This:egpBox(Id1, Pos, Size)
+        Btn["id", number] = Id1
+        Btn["ident", string] = Ident
+        Btn["parent", table] = Parent
+        Btn["label", table] = This:label(Btn, Name, vec2(), 24):setcolor(vec(255,0,0))
+        Buttons:pushTable(Btn)  
+        if(Parent:count() > 0)
+        {
+            This:egpParent(Id1, Parent["id", number])
+        }
+        return Btn
+    }
+    if(!EGP_CLICK_TIMER) {EGP_CLICK_TIMER = 200}
+    if(!EGP_BUTTON_NORMAL_COLOR) {EGP_BUTTON_NORMAL_COLOR = vec(0,0,255)}
+    if(!EGP_BUTTON_CLICK_COLOR) {EGP_BUTTON_CLICK_COLOR = vec(100, 100, 100)}
+    
+    if(!EGP_BUTTON_CLICK_SOUND) {EGP_BUTTON_CLICK_SOUND = "ui/buttonclick.wav"}
+    
+    runOnTick(1)
+    
+    W:egpClear()
+}
+
+if(first())
+{
+    function void frame_button_handler(Name:string, Btn:table)
+    {die("Egp system included but button handler not defined~!")}  
+    
+    function void table:click()
+    {
+        local Button_Id = This["id", number]
+        
+        Egp_StateBack:pushArray(array(Button_Id, W:egpColor(Button_Id))) #element id, return color state
+        This:setcolor(EGP_BUTTON_CLICK_COLOR)
+        frame_button_handler(This["ident", string], This)
+        entity():soundPlay("click", 0.5, EGP_BUTTON_CLICK_SOUND)
+        timer("restore_status", EGP_CLICK_TIMER)          
+    } 
+}
+EgpUses = changed(Egp_User:keyUse()) && Egp_User:keyUse()
+
+if(EgpUses)
+{
+    Cursor = W:egpCursor(Egp_User)
+}
+#if(Egp_User:isValid())
+#{
+    if(EgpUses)
+    {  
+        for(K = 1, Buttons:count())
+        {
+            if(!perf())
+            {
+                break   
+            }
+            
+            local V = Buttons[K, table]
+            if(W:in_bounds(V["id", number], Cursor))
+            {
+                V:click()
+                break
+            }
+        }   
+    }
+#}
+
+if(clk("restore_status"))
+{
+    while(Egp_StateBack:count())
+    {
+        local Array = Egp_StateBack:popArray()
+        W:egpColor(Array:number(1), Array:vector(2))
+    }   
+}

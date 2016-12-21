@@ -1,0 +1,19 @@
+@persist EgpIds:array
+
+if(first()) {
+    for(I = 1, egpMaxObjects()) {EgpIds:pushNumber(I)}
+    function number egp_get_id() {return EgpIds:shiftNumber()}
+    function void ego_free_id(Id:number) {EgpIds:pushNumber(Id)}
+    function array egp_get_ids(N:number) {
+        local R = array()
+        for(I = 1, N) {
+            R:pushNumber(EgpIds:shiftNumber())
+        }
+        return R
+    }
+    function void egp_free_ids(A:array) {
+        for(I = 1, A:count()) {
+            EgpIds:pushNumber(A:shiftNumber())   
+        }   
+    }
+}

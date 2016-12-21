@@ -1,0 +1,30 @@
+@name 
+@inputs 
+@outputs 
+@persist Bullets:array
+@trigger 
+
+runOnTick(1)
+
+if(first())
+{
+    
+}
+
+if(changed(owner():keyAttack1()) && owner():keyAttack1() )
+{
+        propSpawnEffect(0)
+        local Ent = propSpawn("models/props_junk/watermelon01.mdl", owner():pos() + vec(0,0,100), owner():eyeAngles(), 0)
+        
+        Ent:setMass(50000)
+        Ent:setColor(vec(255,0,0))
+        
+        Bullets:pushEntity(Ent)   
+}
+
+for(I = 1, Bullets:count())
+{
+    local Ent = Bullets:entity(I)
+    
+    Ent:applyForce(Ent:forward() * Ent:mass() * 20000000000)   
+}

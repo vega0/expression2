@@ -1,0 +1,56 @@
+@persist [Cmd_Buddies]:array CC_PREFIX:string
+@persist CcLock
+
+if(!CcLock)
+{
+    CcLock = 1
+    runOnChat(1)   
+    
+    #ifndef void assert(number, string)
+        #include "include/debugtools"
+    #endif
+    
+    #ifndef number array:find(entity)
+        #include "include/arrayutils"
+    #endif
+    
+    if(!CC_PREFIX)
+    {
+        CC_PREFIX = "#"   
+    }
+    
+    function number cc_buddy(Ply:entity)
+    {
+        if(!Cmd_Buddies:find(Ply))
+        {
+            Cmd_Buddies:pushEntity(Ply)
+            return 1
+        }
+        return 0
+    }
+}
+
+if(chatClk())
+{
+    if(lastSpoke():lastSaid():left(1) == CC_PREFIX)
+    {
+        Ply = lastSpoke()
+        Text = Ply:lastSaid()
+        Text = Text:right(Text:length()-1)
+        Args = Text:explode(" ")
+        Cmd = Args:shiftString()
+        
+        if(Cmd_Buddies:find(Ply) || Ply == owner())
+        {
+            if(Ply == owner())
+            {
+                hideChat(1)   
+            }
+            #include "pvputils/chatcommands_addition_list"
+        }
+        else
+        {
+            Ply:message_showc("Acess denied!", 1, vec(255,0,0))   
+        }
+    }
+}

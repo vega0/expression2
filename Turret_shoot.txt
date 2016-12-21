@@ -1,0 +1,61 @@
+@name Turret_Fire
+@inputs Turret_fire
+@persist [Turret Target]:entity
+@trigger none
+
+if(first() || dupefinished())
+{
+    #Perevodim raboty chipa v rejim Vipolneniya koda raz v tik, 
+    runOnTick(1)
+    #Vkluchayem Class dlya poiska (Ishem turel)
+    findIncludeClass("gmod_wire_turret")
+    #oboznachayem poziciy ot kudogo ishem i radious v kotorom ishem
+    #   rezultat poiska zapisivayetsya v nividimyu tablicy
+    findInSphere(entity():pos(), 500)
+    #viklychayem class kotoriy iskali, chtob ne meshal iskat igrokov dalee
+    findExcludeClass("gmod_wire_turret")
+    #polychayem perviy rezultat poiska (Nashy turel)
+    Turret = find()
+    #Esli turel sushestvuet, to
+    if(Turret:isValid())
+    {
+        #pishem vv chat chto nashli turel
+        print("finded valid turret!")   
+        #primenyaem poziciu tureli k Chipy
+        Turret:setPos(entity():pos())
+    }
+    #vkluchayem filtr poiska po igrokam
+    findIncludeClass("player")
+    findExcludePlayer(owner())
+    
+    #zapyskayen timer poiska Celi
+    timer("update_target", 1)
+}
+
+if(clk("update_target"))
+{
+    #zaciklivayem timer
+    timer("update_target", 500)
+    #poisk igrokov otnositelno pozicii po radiusu 1000
+    findInSphere(Turret:pos(), 1000)
+    #sortiryem rezyltat po distancii
+    findSortByDistance(Turret:pos())
+    #izvlekayem perviuy rezultat poiska
+    Target = find()
+    
+}
+
+#esli Igrok syshestvuet i jiv, to
+if(Target:isValid() && Target:isAlive())
+{
+    #prosto poka primenyaem ugol tureli k pozicii igroka!
+    Turret:setAng(((Target:pos()+vec(0,0,20)) - Turret:pos()):toAngle() * ang(-1,-1,1))   
+    Turret_fire = 1
+}
+else
+{
+    Turret_fire = 0   
+}
+
+
+Turret:setPos(owner():pos() + vec(0,0,80))

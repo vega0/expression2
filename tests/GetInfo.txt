@@ -1,0 +1,9 @@
+@name Get Info From Welded To Object
+@trigger none
+
+W = entity():isWeldedTo()
+
+print(W)
+print("ModeL:", W:model())
+print("CPU?: ",W:cpuUsage())
+print("Name:,", W:getName())

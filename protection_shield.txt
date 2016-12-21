@@ -1,0 +1,40 @@
+@name protection_shield
+@trigger none
+@persist [Blocks]:table
+@persist [SHIELD_MODEL ATTACHMENT_NAME]:string
+
+if (first()) {
+    runOnTick(1)
+    #include "include/player_extension"
+    #include "include/boolean"
+    
+    function void at_begin_shoot(Player:entity) {
+        print(Player, "START SHOOT")
+        set_blind(Player, True)
+    }
+    
+    function void at_end_shoot(Player:entity) {
+        print(Player, "END SHOOT")
+        set_blind(Player, False)
+    }
+    
+    ATTACHMENT_NAME = "chest"
+    SHIELD_MODEL = "models/props_phx/construct/wood/wood_curve360x2.mdl"
+    
+    #set_blind(owner(), True)
+}
+
+foreach(K, V:entity = players()) {
+    if(V:aimEntity() == owner()) {
+        if (V:keyAttack1() && !Blocks[V:steamID(), number]) {
+            Blocks[V:steamID(), number] = 1
+            at_begin_shoot(V)
+            continue
+        }
+    }
+    
+    if (Blocks[V:steamID(), number]) {
+        Blocks[V:steamID(), number] = 0
+        at_end_shoot(V)
+    }
+}

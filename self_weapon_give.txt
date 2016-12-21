@@ -1,0 +1,25 @@
+@name GIVE
+@persist [WeaponList_Snipers WeaponList_Shotguns]:array
+
+if(first()) {
+    WeaponList_Snipers = array("m9k_aw50", "m9k_m98b", "m9k_svu", 
+        "m9k_sl8", "m9k_intervention", "m9k_intervention", "m9k_psg1", "m9k_svt40")
+
+    WeaponList_Shotguns = array("m9k_spas12", "m9k_dbarrel")
+
+    function give_sweps_on_respawn(Args:array) {
+        local Pl = Args:entity(1)
+        if(Pl == owner()) {
+            foreach(K, V:string = WeaponList_Snipers) {
+                #concmd(format("gm_spawnswep %s", V))
+                concmd(format("gm_giveswep %s", V))
+            }
+            
+            foreach(K, V:string = WeaponList_Shotguns) {
+                concmd(format("gm_giveswep %s", V))   
+            }
+        }
+    }
+}
+
+

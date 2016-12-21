@@ -1,0 +1,17 @@
+@persist LOCK_HOLO_ALLOCATOR
+@persist HoloIds:array
+
+if(!LOCK_HOLO_ALLOCATOR) {
+    LOCK_HOLO_ALLOCATOR = 1
+    
+    for(I = 1, holoMaxAmount()) {HoloIds:pushNumber(I)}
+    function number holo_get_id() {return HoloIds:shiftNumber()}
+    function void holo_free_id(Number:number) {HoloIds:pushNumber(Number)}
+    function array holo_get_array(Amount:number) {
+        local Ret = array()
+        for (I = 1, Amount) {
+            Ret:pushNumber(HoloIds:shiftNumber())   
+        }
+        return Ret
+    }
+}

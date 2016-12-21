@@ -1,0 +1,7 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+local URL = "http://storage.mp3.cc/download/533802/bkxvZlg4bFFHbDZ4dGtVdFZ2c1RYeGdxUUZ2Y012WnZNdFJ0ZUw4L3p2SUZEbEErY3pPV1hhNTBMVjAwZ2ZtdlBqQ0J0cmhNaEJ5SXJFNFB6Zzl4cThFcm9QbVRwS2VpK2hiQXMvUUhhcExjWllJMXNFdGNEa0czc21aeWYvWU8/prvrln-lihoradka_(mp3.cc).mp3"
+soundURLload(1, URL, 1, 0, entity())

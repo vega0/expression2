@@ -1,0 +1,107 @@
+@name Sphere Protector
+
+@persist [O E P]:entity V:array Yolo:array
+
+#System constants
+@persist ShieldState IgnoreList:array
+
+interval(100)
+
+O = owner()
+E = entity()
+L = players()
+
+if(first()) {
+    E:setAlpha(255)
+    holoCreate(1, entity():pos())
+    holoCreate(2, entity():pos())
+    holoModel(1, "hq_sphere")
+    holoModel(2, "hq_sphere")
+    holoMaterial(1, "models/wireframe")
+    holoMaterial(2, "models/shadertest/shader3")
+    holoScale(1, vec(-50))
+    holoScale(2, vec(50))
+    
+    #ifndef entity array:find(entity)
+        #include "include/arrayutils"
+    #endif
+}
+
+#ifndef entity cc_find(string)
+    #include "include/chatcommands"
+#endif
+
+if(first())
+{
+    DEBUG_PREFIX = "Shield"
+    CHAT_PREFIX = "$" #Tyt nastraivayem prefix
+    
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "shield")
+        {
+            Cmd = Args:shiftString()
+            
+            if(Cmd == "on")
+            {
+                ShieldState = 1
+                holoAlpha(1, 255)
+                holoAlpha(2, 255)
+                info_print("Shield turn on") 
+                
+                return
+            } 
+            elseif(Cmd == "off")
+            {
+                ShieldState = 0 
+                holoAlpha(1, 0)
+                holoAlpha(2, 0)
+                info_print("Shield turn 0ff")   
+                
+                return
+            } 
+            
+            if(Cmd == "ignore")
+            {
+                local Target = cc_find(Args:shiftString())
+                
+                if(Target:isValid())
+                {
+                    if(!IgnoreList:find(Target))
+                    {
+                        IgnoreList:pushEntity(Target)
+                        info_print("adding '" + Cc_Last_Name + "' to ignore list!")   
+                    }
+                    else
+                    {
+                        error_print("'" + Cc_Last_Name + "' already ignored by shield.")   
+                    }
+                }   
+            }
+        }
+    }   
+}
+
+holoParent(1, E)
+holoPos(1, E:pos()+vec(0,0,10))
+holoParent(2, E)
+holoPos(2, E:pos()+vec(0,0,10))
+interval(100)
+A=findToArray()
+findInSphere(E:pos(),300)
+findByClass("player")
+findByClass("npc_*")
+findByClass("physics_*")
+
+if(ShieldState)
+{
+    foreach(K,V:entity=A){
+        if(V:owner() != owner()&
+            V:pos():distance(E:pos())<250 &&
+            !IgnoreList:find(V:owner())){
+            
+            R=random(2000-10000)%10000
+            V:setPos(entity():pos()+vec(0,0,R))
+        }
+    }
+}

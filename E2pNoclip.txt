@@ -1,0 +1,15 @@
+@name E2pNoclip
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first()) {
+    runOnKeys(owner(), 1)
+}
+
+if(keyClk()) {
+    if(owner():keyPressed("v")) {
+        owner():playerNoclip(!owner():inNoclip())
+    }
+}

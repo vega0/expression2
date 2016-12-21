@@ -1,0 +1,214 @@
+@name C&C Strategic Control Center
+@trigger none
+@model models/props_c17/BriefCase001a.mdl
+#@persist Hud_Egp:wirelink
+@persist Con_Msg:array
+#Spylog EGP ids
+@persist CC_LOG_TEXT_ID CC_LOG_CAPT_ID CC_LOG_BACK
+@persist RadarTrackData:table AcceptPassword:string
+@persist CC_RADAR_TOGGLE CC_PICKED_UP CC_LH_HOLO_ID
+
+#include "include/events"
+
+if(first()) {
+    Hud_Egp:egpClear()
+    CC_RADAR_TOGGLE = 1
+    #include "include/holo_allocator"
+    #include "include/egp_allocator"
+    #include "include/chatcommands"
+    #include "cc_strategic_control_center/entities_setup"
+    #include "cc_strategic_control_center/commands_setup_1"
+    function string get_short_random_pass() {
+        local Alphabet = "abcdefg0987654321?@#$%&"
+        local R = ""
+        for (I = 1, 7){
+            R += Alphabet:index(random(0, Alphabet:length()))}
+        return R}
+ 
+    function void initialize_spyeye_log(Egp:wirelink){
+        local SpyEyePos = vec2(12, egpScrH(owner()) / 4)
+        local SpyEyeSize = vec2(556, 300)
+        CC_LOG_BACK = egp_get_id()
+        Egp:egpBox(CC_LOG_BACK, SpyEyePos + SpyEyeSize / 2 - vec2(4, 16), SpyEyeSize + vec2(8, 38))
+        Egp:egpColor(CC_LOG_BACK, vec4(0,0,0,100))
+        CC_LOG_TEXT_ID = egp_get_id()
+        Egp:egpTextLayout(CC_LOG_TEXT_ID, "Initial Text!", SpyEyePos, SpyEyeSize)
+        Egp:egpSize(CC_LOG_TEXT_ID, 15)
+        Egp:egpColor(CC_LOG_TEXT_ID, vec(55,255,55))
+        CC_LOG_CAPT_ID = egp_get_id()
+        Egp:egpText(CC_LOG_CAPT_ID, format("%s Log Panel ;]", 
+            entity():getName(), AcceptPassword), SpyEyePos - vec2(0, 25))
+        Egp:egpColor(CC_LOG_CAPT_ID, vec(255,0,0))
+        register_event("on_event_fired", "event_listener_1")}
+    
+    function spy_eye_log(Msg:string){
+        Con_Msg:pushString(Msg)
+        if(Con_Msg:count() < 20) {Con_Msg:shiftString()}
+        Hud_Egp:egpSetText(CC_LOG_TEXT_ID, Con_Msg:concat("\n"))}
+    
+    function void hide_cc_spyeye_log(Flag:number) {
+        local A = Flag? 255 : 0
+        Hud_Egp:egpAlpha(CC_LOG_TEXT_ID, A)
+        Hud_Egp:egpAlpha(CC_LOG_CAPT_ID, A)
+        Hud_Egp:egpAlpha(CC_LOG_BACK, A)}
+    
+    entity():soundPlay(1, 1, "doors/door_metal_large_chamber_close1.wav")
+
+    EVENT_HANDLE_PLAYERS = 1
+    EVENT_HANDLE_PLAYERS_EXTRA = 1
+    EVENT_HANDLE_PLAYER_JOIN_LEAVE = 1
+    
+    function void event_listener_1(Args:array) {
+        if(!Hud_Egp:egpAlpha(CC_LOG_TEXT_ID)) {return}
+        
+        local Pl = Args:entity(2)
+        local Count = Con_Msg:count()
+        if(Args:string(1) == "on_player_health_change") {
+            local Delta = Args:number(4)
+            if(Delta > 0) {
+                Con_Msg:pushString(format("%s increased health by %i (health: %i)", Pl:name(), Delta, Pl:health()))
+            }else{Con_Msg:pushString(format("%s has been damaged by %i (health: %i)", Pl:name(), abs(Delta), Pl:health()))}
+        }elseif(Args:string(1) == "on_player_death") {
+            Con_Msg:pushString(format("=====> '%s' ~DIED~ >:)", Pl:name()))
+        }elseif(Args:string(1) == "on_player_respawn"){
+            Con_Msg:pushString(format("Player '%s' Respawned At (%f, %f, %f)", Pl:name(), 
+                Pl:pos():x(), Pl:pos():y(), Pl:pos():z()))
+        }elseif(Args:string(1) == "on_player_vehicle_state_change"){
+            if(Args:number(3)) {
+                Con_Msg:pushString(format("Player '%s' has entered vehicle!", Pl:name()))}
+            else{
+                Con_Msg:pushString(format("Player '%s' has exit vehicle!", Pl:name()))}
+        }elseif(Args:string(1):find("on_player_say")) {
+            Con_Msg:pushString(format("(spec: %s) '%s' => '%s'", 
+                Args:string(1), lastSpoke():name(), lastSaid()))}
+        if(Con_Msg:count() > 20) {Con_Msg:shiftString()}
+        if(Con_Msg:count() != Count) {
+            stoptimer("remove_single")
+            timer("remove_single", 5000)
+            Hud_Egp:egpSetText(CC_LOG_TEXT_ID, Con_Msg:concat("\n"))}
+        Hud_Egp:egpColor(CC_LOG_CAPT_ID, vec(random(0, 255), random(0, 255), random(0, 255)))
+    }
+    
+    initialize_spyeye_log(Hud_Egp)
+    
+    function void on_pl_join_data_rec(Args:array) {
+        local Pl = Args:entity(1)
+        if(!RadarTrackData[Pl:steamID(), array]:count()) {
+            local Ids = egp_get_ids(4)
+            Hud_Egp:egpCircle(Ids:number(1), vec2(), vec2(1))
+            Hud_Egp:egpText(Ids:number(2), Pl:name(), vec2())
+            Hud_Egp:egpAlign(Ids:number(2), 1, 1)
+            Hud_Egp:egpSize(Ids:number(2), 12)
+            Hud_Egp:egpParent(Ids:number(2), Ids:number(1))
+            Hud_Egp:egp3DTracker(Ids:number(3), Pl:pos())
+            Hud_Egp:egpParent(Ids:number(1), Ids:number(3))
+            Hud_Egp:egpLine(Ids:number(4), vec2(), vec2(0, -20))
+            Hud_Egp:egpParent(Ids:number(4), Ids:number(1))
+            Hud_Egp:egpColor(Ids:number(4), vec(255,0,0))
+            Con_Msg:pushString(format("Initialized tracker for '%s'", Pl:name()))
+            if(!Pl:isAlive()) {
+                foreach(K, V:number = Ids) {
+                    Hud_Egp:egpAlpha(V, 0)}}
+            RadarTrackData[Pl:steamID(), array] = Ids
+        } else {print("WARNING! Attempt to initialize new tracker for player, what already initalized")}
+    }
+    function void setup_tracker_for(Pl:entity){
+            on_pl_join_data_rec(array(Pl))}
+    register_event("on_player_join", "on_pl_join_data_rec")
+
+    foreach(K, V:entity = players()){ 
+        if(V != owner()){
+            if(perf()){
+                setup_tracker_for(V)
+            }else{
+                print("!setup_tracker_for perf lock.")
+                timer("DelayInit_HudTracker", 500)
+                break}}}
+
+    Hud_Egp:egpSetText(CC_LOG_TEXT_ID, Con_Msg:concat("\n"))
+    timer("update_radar", 1)
+    function void drop_track_data(Args:array){
+        local Stid = Args:string(1)
+        foreach(K, V:number = RadarTrackData[Stid, array]){
+            Hud_Egp:egpRemove(V)}
+        egp_free_ids(RadarTrackData[Stid, array])
+        RadarTrackData:removeArray(Stid)
+        spy_eye_log(format("Tracker dropped from '%s'", Stid))}
+
+    register_event("on_player_leave", "drop_track_data")
+    function void hide_tracker_on_player_die(Args:array){
+        local Pl = Args:entity(1)
+        if(RadarTrackData[Pl:steamID(), array]:count()){
+            foreach(K, V:number = RadarTrackData[Pl:steamID(), array]){
+                Hud_Egp:egpAlpha(V, 0)}}}
+    register_event("on_player_death", "hide_tracker_on_player_die")
+    function void show_tracker_on_player_spawn(Args:array){
+        local Pl = Args:entity(1)
+        if(RadarTrackData[Pl:steamID(), array]:count()) {
+            foreach(K, V:number = RadarTrackData[Pl:steamID(), array]) {
+                Hud_Egp:egpAlpha(V, 255)}}}
+    register_event("on_player_respawn", "show_tracker_on_player_spawn")
+
+    spy_eye_log("Initialize finished.")
+    
+    #include "self_weapon_give"
+    register_event("on_player_respawn", "give_sweps_on_respawn")
+    
+    ## HUD Commands declaration
+    local G_Visuals = ChatCommands_Data:cmd_group("visuals", "HUD Control commands")
+    function cmd_hide_show_radar(Args:array){
+        CC_RADAR_TOGGLE = Args:shiftNumber()  
+        if(CC_RADAR_TOGGLE){
+            timer("update_radar", 1)}
+        foreach(K, V:array = RadarTrackData){
+            for(I = 1, V:count()){
+                Hud_Egp:egpAlpha(V:number(I), CC_RADAR_TOGGLE ? 255 : 0)}}}
+
+    G_Visuals:cmd_reg("toggle_radar", "cmd_hide_show_radar", "N", "Show/Hide Radar", array("Flag[0/1]"))
+}
+
+if(CC_RADAR_TOGGLE && clk("update_radar")) {
+    timer("update_radar", 180)
+    foreach(K, V:entity = players()) {
+        if(RadarTrackData[V:steamID(), array]:count()) {
+            local Ar = RadarTrackData[V:steamID(), array]
+            Hud_Egp:egpPos(Ar:number(3), V:pos() + vec(0,0,50))}}}
+
+if(clk("remove_single")) {
+    if(Con_Msg:count() > 0) {
+        Con_Msg:shiftString()
+        Hud_Egp:egpSetText(1, Con_Msg:concat("\n"))
+        timer("remove_single", 700)}
+    else{
+        Hud_Egp:egpSetText(CC_LOG_TEXT_ID, "~")}}
+
+# Performance fix_#1
+if(clk("DelayInit_HudTracker")){
+    foreach(K, V:entity = players()) {
+        if(!RadarTrackData[V:steamID(), array]:count()){
+            setup_tracker_for(V)
+            print("Post Init Tracker for", V)
+            break}}
+    if(RadarTrackData:keys():count() != players():count()){
+        timer("DelayInit_HudTracker", 300)}
+    else{
+        fire_event("hud_tracker_initialize_after_perf_exceed")
+        print("Tracker init done. Performance fix_#1")}}
+
+if(!CC_LH_HOLO_ID && changed(owner():keyUse()) && owner():keyUse()) {
+    if(owner():aimEntity() == entity()) {
+        CC_LH_HOLO_ID = holo_get_id()
+        print(CC_LH_HOLO_ID)
+        ## Left Hand holoConfig
+        holoCreate(CC_LH_HOLO_ID, owner():attachmentPos("anim_attachment_LH"), vec(0.1),
+            owner():attachmentAng("anim_attachment_LH"), vec(255,0,0), "cube")
+        holoParentAttachment(CC_LH_HOLO_ID, owner(), "anim_attachment_LH")
+        holoVisible(CC_LH_HOLO_ID, players(), 0)
+        local HE = holoEntity(CC_LH_HOLO_ID)
+        entity():setPos(HE:toWorld(vec(-8,-1.5,0)))
+        entity():setAng(HE:toWorld(ang(90,0,0)))
+        entity():soundPlay(1, 1, "buttons/lever6.wav")
+        timer("parent", 10)}}
+
+if(clk("parent")){
+    entity():parentTo(holoEntity(CC_LH_HOLO_ID))}

@@ -1,0 +1,11 @@
+@name HeliTest
+
+Heli = entity():isWeldedTo()
+
+Heli:setSkin(1)
+
+holoCreate(1)
+
+holoPos(1, entity():pos())
+
+holoModel(1, Heli:model())

@@ -1,0 +1,72 @@
+@name Scrambler
+@inputs 
+@outputs 
+@persist [KEY, Said, PUBLIC_KEY]:string
+
+@persist MessagePrefixes:array
+@trigger none
+
+if(first())
+{
+    runOnChat(1) 
+    PUBLIC_KEY = "default_key"
+    KEY = "hello_world"
+
+    MessagePrefixes = array("$", "!", "*", "^", "&", "(")
+    
+    function string string:message(Key:string)
+    {
+        local Result = ""
+        local Index = 0
+        for(I = 1, This:unicodeLength())
+        {
+            if(Index > Key:length())
+            {Index = 1}else{Index++}
+            
+            Ch1 = This:index(I)
+            Ch2 = Key:index(Index)
+            Xr = "" + toUnicodeChar(bXor(toUnicodeByte(Ch1), toUnicodeByte(Ch2)))
+
+            Result += Xr
+        }
+        This = Result
+        return Result
+    }  
+    
+    function void message_say(Msg:string)
+    {
+        local Pref = MessagePrefixes:string(random(1, MessagePrefixes:count()))   
+        
+        concmd("say " + Pref + Msg)
+    }
+    message_say(KEY:message(PUBLIC_KEY))
+}
+
+
+if(chatClk(owner()))
+{
+    Said = owner():lastSaid()
+    Prefix = Said:index(1)
+    Said = Said:right(Said:length()-1)
+    if(Prefix == "#")
+    {
+        hideChat(1)
+        message_say(Said:message(KEY))
+    } 
+}
+
+if(chatClk())
+{
+    Ply = lastSpoke()
+    Msg = Ply:lastSaid()
+    Pref = Msg:left(1)
+    Msg = Msg:right(Msg:length()-1)
+    for(I = 1, MessagePrefixes:count())
+    {
+        if(Pref == MessagePrefixes:string(I))
+        {
+            hint(Msg:message(KEY), 10)
+            break   
+        }
+    }   
+}

@@ -1,0 +1,25 @@
+@name Include With Fix
+@trigger none
+
+@persist INCLUDE_DATA:table
+
+if(first())
+{
+    runOnFile(1)
+    
+    function void include_raw(File:string)
+    {
+        
+    }   
+    
+    fileLoad("expression2/test1.txt")
+}
+
+
+if(fileClk())
+{
+    if(fileStatus())
+    {
+        print(fileRead())   
+    }   
+}

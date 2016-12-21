@@ -1,0 +1,162 @@
+@persist [Ps_Enabled StackToEnabled ShieldSounds]:array Ps_Indexes:table
+
+@persist PROPSHIELD_MODEL:string PROPSHIELD_LAGG_FIX_ENABLED PROPSHIELD_SOUNDS_ENABLE
+@persist PsLock
+
+if(!PsLock)
+{
+    PsLock = 1
+    #ifndef array:find(entity)
+        #include "include/arrayutils"
+    #endif
+    
+    #ifndef void:holo_get_id(void)
+        #include "include/indexmanager"
+    #endif
+    
+    if(PROPSHIELD_SOUNDS_ENABLE)
+    {
+        ShieldSounds:pushString("ambient/levels/labs/teleport_malfunctioning.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/citadel_drone_loop6.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/citadel_drone_loop5.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/citadel_drone_loop3.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/citadel_drone_loop1.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/extract_loop1.wav")
+        ShieldSounds:pushString("ambient/levels/citadel/zapper_ambient_loop1.wav")
+        ShieldSounds:pushString("ambient/machines/electric_machine.wav")
+        ShieldSounds:pushString("ambient/machines/city_ventpump_loop1.wav")
+        ShieldSounds:pushString("ambient/machines/machine_whine1.wav")
+    }
+    
+    if(!PROPSHIELD_LAGG_FIX_ENABLED)
+    {
+        hint("PropShield [WARN]: Lagg fix is disabled!", 20)   
+    }
+    
+    if(PROPSHIELD_MODEL == "")
+    {
+        PROPSHIELD_MODEL = "models/hunter/blocks/cube2x2x2.mdl"  
+    }
+    
+    function number entity:ps_enable()
+    {
+        if(!This:isValid() || !This:isPlayer())
+        {
+            return 0   
+        }
+        
+        if(!Ps_Enabled:find(This))
+        {
+            Id = holo_get_id() #
+            EntAxis = holoCreate(Id) #
+            holoAlpha(Id, 0) #
+            #holoPos(Id, This:toWorld(vec(-2,0,-8))) #
+            holoPos(Id, This:attachmentPos("chest") - vec(0,0,15))
+            holoParentAttachment(Id, This, "chest") #
+            holoDisableShading(Id, 1)
+            Ps_Enabled:pushEntity(This) #
+            Prop = propSpawn(PROPSHIELD_MODEL, EntAxis:pos(), EntAxis:angles(), 0) #
+            
+            #ifdef noCollide(entity, entity)
+                noCollide(Prop, This)
+                noCollide(This, Prop)
+            #endif
+            Prop:setColor(vec(100,0,0))
+            Prop:setAlpha(255)
+            Prop:parentTo(EntAxis) #
+            
+            Id2 = holo_get_id()
+            
+            Deco = holoCreate(Id2)
+            holoPos(Id2, EntAxis:pos())
+            holoAng(Id2, EntAxis:angles())
+            holoParent(Id2, EntAxis)
+            holoAlpha(Id2, 155)
+            holoColor(Id2, vec())
+            holoScale(Id2, vec(1,1,1) * 8)
+            holoRenderFX(Id2, 15)
+            
+            Id3 = holo_get_id()
+            holoCreate(Id3)
+            holoPos(Id3, EntAxis:pos())
+            holoAng(Id3, EntAxis:angles())
+            holoParent(Id3, EntAxis)
+            holoAlpha(Id3, 100)
+            holoColor(Id3,vec(0,255,0))
+            holoScale(Id3, vec(1,1,1) * -6)
+            
+            Ps_Indexes:pushArray(array(Id, Id2, Id3)) #  
+            
+            
+            if(PROPSHIELD_SOUNDS_ENABLE)
+            {
+                Prop:soundPlay("embient1", 0, ShieldSounds:string(random(1, ShieldSounds:count())), 0)    
+            }
+            
+            if(PROPSHIELD_LAGG_FIX_ENABLED)
+            {
+                StackToEnabled:pushEntity(This)
+                timer("lagg_fix", 8 * 1000)
+            }
+            
+            return 1 #
+        }
+        return 0
+    }
+    
+    function number entity:ps_disable()
+    {  
+        if(!This:isValid() || !This:isPlayer())
+        {
+            return 0   
+        }  
+        
+        Id = Ps_Enabled:remove_entity(This) 
+        
+        if(Id)
+        {
+            IDS = Ps_Indexes:removeArray(Id)
+            
+            foreach(K, V:number=IDS)
+            {
+                holoDelete(V)
+                holo_back_id(V)   
+            }
+        }
+    }
+}
+
+if(PROPSHIELD_LAGG_FIX_ENABLED)
+{
+    if(clk("lagg_fix"))
+    {        
+        
+        V = StackToEnabled:popEntity()
+        K = Ps_Enabled:find(V)
+
+        local HoloPos = holoEntity(Ps_Indexes[K, array]:number(1)):pos()
+        
+        #print(V:attachmentPos("chest"):distance(HoloPos)
+        
+        if(V:attachmentPos("chest"):distance(HoloPos) > 15)
+        {
+            V:ps_disable()
+            V:ps_enable()
+            
+            
+            #holoUnparent(K)
+            #holoPos(K, V:toWorld(vec(-2,0,-8))) #
+            #holoParentAttachment(K, V, "chest") #
+
+            
+            timer("lagg_fix", 8 * 1000)
+        }
+        else
+        {
+            hint("PropShield: Player '" + V:name() + "' Fixed!", 20)   
+        }
+          
+    }
+    
+}
+

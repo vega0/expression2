@@ -1,0 +1,40 @@
+@persist ProtectionVirt:table
+
+if(first())
+{
+    
+    #ifndef vector vector_random(number)
+        #include "include/vectorutils"
+    #endif
+    
+    function void entity:protect(Keyword:string)
+    {
+        ProtectionVirt[Keyword, array] = array(This, This:pos(), This:angles())
+        #ifdef entity:propNotSolid(number)
+            This:propNotSolid(1) This:propDraw(0)
+        #endif
+        This:propDrag(0) This:propShadow(0)
+        This:propGravity(0) This:setPos(vector_random(1337))
+    }   
+    
+    function void unprotect(Keyword:string)
+    {
+        local VirtData = ProtectionVirt[Keyword, array] 
+        
+        if(VirtData)
+        {
+            local E = VirtData:shiftEntity()
+            local P = VirtData:shiftVector()
+            local A = VirtData:shiftAngle()
+            
+            #ifdef entity:propNotSolid(number)
+                E:propNotSolid(0) E:propDraw(1)
+            #endif
+            
+            E:propDrag(1) E:propShadow(1)
+            E:propGravity(1) E:setPos(P)
+            E:setAng(A)
+        }
+    }
+}
+

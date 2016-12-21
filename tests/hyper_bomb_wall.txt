@@ -1,0 +1,30 @@
+@name Hyper Bomb Test Wall
+@trigger none
+@persist BOMB_MODEL:string Shells:array AngVelTrack:table
+
+if(first()) {
+    BOMB_MODEL = "models/props_phx/ww2bomb.mdl"       
+    
+    function create_new_shell_at(Vec:vector) {
+        local E = propSpawn(BOMB_MODEL, Vec, owner():eyeAngles(), 0)
+        #E:setMass(50000)
+        Shells:pushEntity(E)   
+    }
+    
+    runOnTick(1)
+}
+
+if(owner():weapon("weapon_crowbar") == owner():weapon()){
+    if(changed(owner():keyAttack1()) && owner():keyAttack1()){
+        create_new_shell_at(owner():shootPos() + owner():eye() * 120)
+    }
+}
+
+if(Shells:count()){
+    foreach(K, V:entity = Shells){
+        V:applyForce(V:forward() * V:mass()^2)
+        if(!AngVelTrack[V:id(), number]) {
+            AngVelTrack[V:id(), number] = V:angVelVector():length()} 
+        elseif(abs(AngVelTrack[V:id(), number] - V:angVelVector():length()) > 15) {
+            Shells:removeEntity(K)
+            V:propBreak()}}}

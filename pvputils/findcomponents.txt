@@ -1,0 +1,22 @@
+@persist Components:table
+
+if(Nam:count() == Arr:count())
+{
+    foreach(K, V:string = Arr)
+    {
+        findIncludeClass(V)
+        
+        findInSphere(entity():pos(), 500)
+        
+        Result = findToArray()   
+        
+        if(Result:count() > 0)
+        {
+            Components[Nam:string(K), array] = Result 
+            
+            print(Nam:string(K), "Found", Result:count())  
+        }
+        
+        findExcludeClass(V)
+    }
+}

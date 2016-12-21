@@ -1,0 +1,8 @@
+@name Prop Spawn Text
+@trigger none
+@persist MODEL:string ENT:entity
+
+if(first()) {
+    MODEL = "models/props_c17/oildrum001.mdl"
+    ENT = propSpawn(MODEL, entity():pos() + vec(0,0, 0), ang(0,0,0), 1)
+}

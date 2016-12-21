@@ -1,0 +1,101 @@
+@persist LOCK_EVENTS
+@persist EVENT_HANDLE_PLAYERS
+@persist [EventPlayer_Healths EventPlayer_HasDead]:table
+
+@persist EVENT_HANDLE_PLAYERS_EXTRA EVENT_HANDLE_PLAYER_JOIN_LEAVE
+@persist [EventPlayer_HasEnterVehicle EventInitial_PlayerArray]:table
+
+@persist EVENT_HANDLE_CHAT
+
+#Registration persist
+@persist EventList_Table:table
+
+if(!LOCK_EVENTS) {
+    LOCK_EVENTS = 1
+    
+    EVENT_HANDLE_PLAYERS = 1
+    EVENT_HANDLE_PLAYERS_EXTRA = 1
+    EVENT_HANDLE_PLAYER_JOIN_LEAVE = 1
+    EVENT_HANDLE_CHAT = 1
+    
+    #include "include/globals"
+    
+    function void fire_event(Name:string, Args:array){
+        foreach(K, V:string = EventList_Table[Name, array]) {
+            V(Args)}
+        if(Name != "on_event_fired"){
+            Args:unshiftString(Name)
+            fire_event("on_event_fired", Args)}}
+
+    function void fire_event(Name:string) {fire_event(Name, array())}
+
+    function void register_event(Name:string, Func:string){
+        if(!EventList_Table[Name, array]) {
+            EventList_Table[Name, array]:pushString(Func)
+        }else{
+            EventList_Table[Name, array] = array(Func)}}
+
+    function remove_event(Name:string, Func:string){
+        if(EventList_Table[Name, array]:count()){
+            foreach(K, V:string = EventList_Table[Name, array]){
+                if(Func == V){
+                    EventList_Table[Name, array]:removeString(K)}}}}
+    
+    # Init Healts to prevent false evnt calls.
+    # AND in veh. state too
+    foreach(K, V:entity = players()) {
+        EventPlayer_Healths[V:steamID(), number] = V:health()
+        EventPlayer_HasEnterVehicle[V:steamID(), number] = V:inVehicle()
+        EventInitial_PlayerArray[V:steamID(), number] = 1
+    }
+    
+    runOnTick(1) runOnChat(1)
+    
+    if(DEBUG){
+        function display_all_event_fired(Args:array){
+            print(Args)}
+        register_event("on_event_fired", "display_all_event_fired")}
+}
+
+if(EVENT_HANDLE_PLAYERS){
+    foreach(K, V:entity = players()){
+        if(EventPlayer_Healths[V:steamID(), number] != V:health()){
+            if(V:health() > 0) {
+                if(!EventPlayer_HasDead[V:steamID(), number]) {
+                    fire_event("on_player_health_change", array(V, V:health(), 
+                        V:health() - EventPlayer_Healths[V:steamID(), number]))} 
+                else {
+                    EventPlayer_HasDead[V:steamID(), number] = 0
+                    fire_event("on_player_respawn", array(V))}} 
+                else {
+                    EventPlayer_HasDead[V:steamID(), number] = 1
+                    fire_event("on_player_death", array(V))}
+            EventPlayer_Healths[V:steamID(), number] = V:health()}}
+
+    if(EVENT_HANDLE_PLAYERS_EXTRA) {
+        foreach(K, V:entity = players()) {
+            if(EventPlayer_HasEnterVehicle[V:steamID(), number] != V:inVehicle()) {
+                fire_event("on_player_vehicle_state_change", array(V, V:inVehicle()))
+                EventPlayer_HasEnterVehicle[V:steamID(), number] = V:inVehicle()
+                if(V:inVehicle()){
+                    fire_event("on_player_vehicle_enter", array(V))}
+                else{
+                    fire_event("on_player_vehicle_exit", array(V))}}}
+        
+        if(EVENT_HANDLE_PLAYER_JOIN_LEAVE && changed(players():count())) {            
+            foreach(K, V:entity = players()){
+                if(!EventInitial_PlayerArray[V:steamID(), number]){
+                    EventInitial_PlayerArray[V:steamID(), number] = 1
+                    fire_event("on_player_join", array(V))}}
+
+            foreach(K, V:string = EventInitial_PlayerArray:keys()) {
+                local Found = 0
+                foreach(K2, V2:entity = players()){
+                    if(V2:steamID() == V) {Found = 1 break}}
+                if(!Found){
+                    fire_event("on_player_leave", array(V))
+                    EventInitial_PlayerArray:removeNumber(V)}}}}}
+
+if(EVENT_HANDLE_CHAT && chatClk()) {
+    fire_event("on_player_say" +
+        (lastSaidTeam() ? "_team" : ""), array(lastSpoke(), lastSaid()))}

@@ -1,0 +1,24 @@
+if(Cmd == "sm")
+{
+    Cmd = Args:shiftString()
+    
+    if(Cmd == "msg")
+    {
+        local Ply = findPlayerByName(Args:shiftString())
+                        
+        if(Ply:isValid())
+        {
+                                
+            local Delay = Args:string(1):toNumber()
+            
+            if(Delay)
+            {
+                Args:shiftString()   
+            }
+            
+            Ply:message_showc(Args:concat(" "), Delay || 2 , vec(255,255,255))   
+            
+            info_print(Ply:name() + "Delayed?" + Delay)
+        }   
+    }   
+}

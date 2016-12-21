@@ -1,0 +1,11 @@
+@trigger none
+
+
+holoCreate(1)
+
+holoPos(1, entity():pos() + vec(0,0,50))
+
+holoModel(1, "models/props_borealis/bluebarrel001.mdl")
+
+
+#If you see White Box, then this server is not support any holo models :(

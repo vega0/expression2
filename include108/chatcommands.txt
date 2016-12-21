@@ -1,0 +1,102 @@
+@name chatcommands
+@persist [CHAT_PREFIX Cc_Last_Name]:string
+@persist Cc_Buddies:array
+@persist CHATCOMMAND_LOCK1
+
+if(!CHATCOMMAND_LOCK1 || first())
+{
+    CHATCOMMAND_LOCK1 = 1
+    runOnChat(1)
+    #ifndef assert(number, string)
+        #include "include/debugtools"
+    #endif
+    #ifndef number array:find(entity)
+        #include "include/arrayutils"
+    #endif
+    
+    if(!CHAT_PREFIX){CHAT_PREFIX = "$"}else{CHAT_PREFIX = CHAT_PREFIX:left(1)}
+    
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        die("Chat Commands included, but function not defined. (void command_handler(string, entity, array))")
+    }
+    
+    function entity cc_find(Name:string)
+    {
+        local Target = findPlayerByName(Name)
+        
+        if(Target:isValid())
+        {
+            Cc_Last_Name = Target:name()
+            return Target
+        }
+        else
+        {
+            error_print("Bad player '" + Name + "'")   
+            return noentity()
+        }
+    }
+    
+    function entity cc_find(Name:string, Message:string)
+    {
+        local Target = cc_find(Name)
+        
+        if(Target:isValid())
+        {
+            info_print(Message + " '" + Target:name() + "'!")
+        } 
+        return Target
+    }
+    Cc_Buddies:pushEntity(owner())
+}
+
+
+if(chatClk())
+{
+    local Ply = lastSpoke()
+    local Said = Ply:lastSaid()
+    local Pref = Said:left(1)
+    local Args = Said:right(Said:length()-1):explode(" ") 
+    
+    if(CHAT_PREFIX == Pref)
+    {
+        local Cmd = Args:shiftString()
+        
+        if(Cc_Buddies:find(Ply) || Ply == owner()) 
+        {
+            command_handler(Cmd, Ply, Args)
+        }
+        
+        if(Ply == owner())
+        {
+            hideChat(1)
+            if(Cmd == "remove")
+            {
+                if(Cc_Buddies:remove_entity(cc_find(Args:string(1))))
+                {
+                    info_print("Player '" + Cc_Last_Name + "' removed successful!")
+                }
+                else
+                {
+                    info_print("Player '" + Cc_Last_Name + "' not in Buddy list")   
+                }
+            }
+            elseif(Cmd == "add")
+            {
+                local Target = cc_find(Args:string(1))
+                if(!Cc_Buddies:find(Target))
+                {
+                    if(Target:isValid())
+                    {
+                        info_print("Allowed '" + Cc_Last_Name + "'!")   
+                        Cc_Buddies:pushEntity(Target)
+                    }
+                }
+                else
+                {
+                    warn_print("'" + Cc_Last_Name + "' already in list!")   
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,65 @@
+@persist PLY_LOCK1
+@persist PlyArray:array
+@persist PLAYERS_UPDATE_TIMER PLAYERS_CALLBACKS_ENABLED
+
+if(!PLY_LOCK1 || first())
+{
+    PLY_LOCK1 = 1
+    #ifndef assert(number, string)
+        #include "include/debugtools"
+        DEBUG_DISPLAY_WARNINGS = 1
+    #endif
+    
+    function number array:find_player_id(Number)
+    {
+        foreach(K, V:entity = This)
+        {
+            if(V:id() == Number)
+            {
+                return K   
+            }
+        }
+        return 0
+    }
+    
+    if(PLAYERS_CALLBACKS_ENABLED)
+    {
+        #ifndef number array:find(number)
+            #include "include/arrayutils"
+        #endif
+        foreach(K, V:entity = players())
+        {
+            PlyArray:pushNumber(V:id())   
+        }
+        if(!PLAYERS_UPDATE_TIMER) {PLAYERS_UPDATE_TIMER = 500}
+        function void player_join(Ply:entity){}
+        function void player_leave(PlyId){}
+        timer("players_check", 1)
+    }
+    runOnTick(1)
+}
+
+if(PLAYERS_CALLBACKS_ENABLED)
+{
+    if(clk("players_check"))
+    {
+        timer("players_check", PLAYERS_UPDATE_TIMER)   
+        
+        foreach(K, V:entity = players())
+        {
+            if(!PlyArray:find(V:id()))
+            {
+                PlyArray:pushNumber(V:id())
+                player_join(V)   
+            }
+        }
+        foreach(K, V:number = PlyArray)
+        {
+            if(!players():find_player_id(V))
+            {
+                player_leave(V) 
+                PlyArray:remove(K)  
+            }
+        }
+    }
+}

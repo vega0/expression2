@@ -1,0 +1,59 @@
+@name Most
+@inputs 
+@outputs 
+@persist Num Init
+@persist Count CountAt [Normal Pos1]:vector Ang:angle
+@trigger 
+
+if(first())
+{
+    Init = 0
+    Num  = 0
+    
+    holoCreate(1)
+    holoCreate(2)
+    
+    runOnKeys(owner(), 1)
+}
+
+if(keyClk())
+{
+    if(owner():keyPressed("p"))
+    {
+        local Pos = owner():aimPos()
+        Num++
+        Num = clamp(Num, 1, 2)
+        
+        holoPos(Num, Pos)
+    }
+    
+    if(owner():keyPressed("o"))
+    {
+        Pos1 = holoEntity(1):pos()
+        local Pos2 = holoEntity(2):pos()
+        local Vec = Pos2 - Pos1
+        Ang = Vec:toAngle()
+        Normal = Vec:normalized()
+        local Distance = Pos1:distance(Pos2)
+        
+        Count = round(Distance / 45) + 1
+        Init = 1
+        timer("_spawn", 400)
+    }
+}
+
+if(clk("_spawn"))
+{
+    if(Init & CountAt < Count)
+    {
+        if(propCanSpawn())
+        {
+            local EPos = Pos1+(Normal * CountAt * 45)+vec(0,0,20)
+            propSpawnEffect(0)
+            local Ent = propSpawn("models/props_junk/PushCart01a.mdl", EPos,ang(0,Ang[2]+90,Ang[1]),1)
+            Ent:setMaterial("phoenix_storms/wood")
+            CountAt++
+        }
+        timer("_spawn", 400)
+    }
+}

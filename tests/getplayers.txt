@@ -1,0 +1,6 @@
+foreach(K, V:entity = players())
+{
+    print(K, V, V:steamID())   
+}
+
+#6	Player [6][LaGGerFeed]	STEAM_0:0:82979074	

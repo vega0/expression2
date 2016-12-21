@@ -1,0 +1,4 @@
+if(first()) {
+    #include "include/boolean"
+    DEBUG = 0
+}

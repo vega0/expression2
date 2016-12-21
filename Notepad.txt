@@ -1,0 +1,3 @@
+@name Notepad
+
+sv_turbophysics 1 #ne daet padat phizike

@@ -1,0 +1,57 @@
+@name Field
+@trigger none
+
+@persist Stack:array I Point:vector
+
+if(first())
+{
+    #include "include/indexmanager"
+    #include "include/vectorutils"   
+    
+    Point = entity():pos() + vec(0,0,50)
+    
+    function void create()
+    {
+        local Id =  holo_get_id()   
+        holoCreate(Id)
+        #holoPos(Id, entity():pos() + vec(random(-1,1), random(-1,1), 0) * 300)
+        holoPos(Id,Point + vec(random(-1,1), random(-1,1), random(-1,1)) * 1)
+        holoScale(Id, vec(0.5))
+        Stack:pushNumber(Id)
+    }
+    
+    timer("create", 1)
+    timer("run", 1)
+}
+
+if(clk("create"))
+{
+    if(I < 100)
+    {
+        I++
+        timer("create", 100)
+        create()   
+    }
+}
+
+if(clk("run"))
+{
+    timer("run", 10)
+    
+    foreach(K, V:number = Stack)
+    {
+        local E = holoEntity(V)
+        local Mag = E:pos():distance(entity():pos())/50
+        holoPos(V, E:toWorld((E:pos() - Point):normalized()) )  
+        holoScale(V, vec(Mag))
+        holoAlpha(V, E:getAlpha() - 5)
+        
+        if(E:getAlpha() < 1)
+        {
+            holoScale(V, vec())
+            holoDelete(V)
+            holo_back_id(V)
+            Stack:remove(K)   
+        }
+    }
+}

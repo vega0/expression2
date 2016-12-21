@@ -1,0 +1,10 @@
+
+function number wirelink:in_bounds(Id:number, Point:vector2)
+{
+    if(inrange(Point, This:egpPos(Id) - This:egpSize(Id) / 2, This:egpPos(Id) + This:egpSize(Id) / 2))
+    {
+        return 1   
+    }
+    
+    return 0
+}

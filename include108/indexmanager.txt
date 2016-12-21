@@ -1,0 +1,68 @@
+## Include only to first()
+
+#Constants
+@persist HaxHolos MaxEgpObjects
+
+#pools
+@persist [HologramsPool EgpPool]:array
+
+MaxEgpObjects = egpMaxObjects()
+
+
+function void initialize_indexes(Array:array, Number)
+{
+    for(I = 1, Number)
+    {
+        Array:pushNumber(I)   
+    }   
+}
+
+initialize_indexes(HologramsPool, 200)
+initialize_indexes(EgpPool, MaxEgpObjects)
+
+##################For holograms##################
+function number holo_get_id()
+{
+    return HologramsPool:shiftNumber()   
+}
+
+function void holo_back_id(Number)
+{
+    HologramsPool:pushNumber(Number)   
+}
+
+#################################################
+
+###################For EGP IDS###################
+
+function number e_alloc()
+{
+    return EgpPool:shiftNumber()   
+}
+
+function array e_alloc(Size)
+{
+    local Array = array()
+    
+    for(I = 1, Size)
+    {
+        Array:pushNumber(EgpPool:shiftNumber()) 
+    }   
+    
+    return Array
+}
+
+function array e_free(Number)
+{
+    EgpPool:pushNumber(Number)   
+}
+
+function array e_free(Array:array)
+{
+    while(Array:count())
+    {
+        EgpPool:pushNumber(Array:shiftNumber())   
+    }   
+}
+
+#################################################

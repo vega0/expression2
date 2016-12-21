@@ -1,0 +1,8 @@
+@name Music
+@inputs 
+@outputs
+@persist 
+@trigger 
+EE=entity()
+soundURLload("1",httpUrlEncode("http://vk-music.ru/files/84712111f4f639/Murat%20Thagalegov%20i%20Sultan%20Uragan%20Edem%20v%20sosednee%20selo%20na%20diskoteku%20(mp3top100.net).mp3"),1000,0,EE)
+soundURLvolume("1",1000)

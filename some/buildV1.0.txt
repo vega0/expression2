@@ -1,0 +1,22 @@
+@name BuildV1.0
+@trigger none
+
+@persist User:entity
+@persist BUILD_SEGMENT_ELEMENT_MODEL:string
+
+if(first())
+{
+    BUILD_SEGMENT_ELEMENT_MODEL = "models/props_phx/construct/metal_plate1.mdl"
+    
+    User = owner()
+    runOnTick(1)
+}
+
+
+
+if(changed(User:keyAttack1()) && User:keyAttack1() && User:tool() == "weapon_crowbar")
+{
+    local R = rangerOffset(300, User:attachmentPos("eyes"), User:eye())
+    
+    print(R:hit())
+}

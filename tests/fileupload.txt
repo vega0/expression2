@@ -1,0 +1,26 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+if(first())
+{
+    runOnFile(1)
+    
+    print("File can list?", fileCanList())
+    print("File can load?", fileCanLoad())
+    print("File can write?", fileCanWrite())
+    
+    print("File max size:", fileMaxSize())
+    
+    fileWrite("data.txt", "some text")
+    fileLoad("data.txt")
+}
+
+if(fileClk())
+{
+    print("File name:" + fileName())
+    print("Status:" + fileStatus())
+    print("Read: " + fileRead())   
+}

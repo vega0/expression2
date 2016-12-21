@@ -1,0 +1,75 @@
+@name debugtools
+@persist DEBUG_PREFIX:string
+@persist DEBUG_DISPLAY_WARNINGS DEBUG_DISPLAY_DEBUG
+
+if(!DEBUG_PREFIX)
+{
+    DEBUG_PREFIX = "prefix_"
+}
+
+function void info_print(Message:string)
+{
+    printColor(
+        vec(0,255,0), DEBUG_PREFIX, 
+        vec(100,100,200), "[INFO] ",
+        vec(255,255,255), Message
+    )      
+}
+
+function void warn_print(Message:string)
+{
+    if(DEBUG_DISPLAY_WARNINGS)   
+    {
+        printColor(
+            vec(0,255,0), DEBUG_PREFIX, 
+            vec(255,255,122), "[WARN] ",
+            vec(255,255,255), Message
+        )   
+    }
+}
+
+function void error_print(Message:string)
+{
+    printColor(
+        vec(0,255,0), DEBUG_PREFIX, 
+        vec(255,0,0),   "[ERROOR] ",
+        vec(255,255,255), Message
+    )       
+}
+
+function void debug_print(Message:string)
+{
+    if(DEBUG_DISPLAY_DEBUG)
+    {
+        printColor(
+            vec(0,255,0), DEBUG_PREFIX, 
+            vec(255,100,0),   "[DEBUG] ",
+            vec(255,255,25), Message
+        )       
+    }
+}
+
+function void die(Message:string)
+{
+    printColor(
+        vec(0,255,0), DEBUG_PREFIX, 
+        vec(255,0,255),   "[DIE]",
+        vec(255,255,255), Message
+    )    
+    
+    selfDestruct()
+}
+
+function void assert(Value:number, Message:string)
+{
+    if(!Value)
+    {
+        die("Assertion Failed! " + Message)   
+    }
+}
+
+function void assert(Value:number)
+{
+    assert(Value, "")   
+}
+

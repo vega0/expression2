@@ -1,0 +1,18 @@
+@persist CC_CMDS1:table
+
+CC_CMDS1 = ChatCommands_Data:cmd_group("cc", "C&C Command Group")
+
+function cc_cmd_place_control_center(Args:array) {
+    if(CC_LH_HOLO_ID) {
+        entity():deparent()
+        local HitNormal = owner():eyeTrace():hitNormal()
+        entity():setPos(owner():aimPos() + HitNormal * 8)
+        entity():setAng(HitNormal:toAngle() * ang(45) + ang(90,0,0))
+        entity():soundPlay(1, 0, format("ambient/chatter/spanish_radio%i.wav", random(1, 5)))
+        holoDelete(CC_LH_HOLO_ID)
+        holo_free_id(CC_LH_HOLO_ID)
+        CC_LH_HOLO_ID = 0
+    }
+}
+
+CC_CMDS1:cmd_reg("place", "cc_cmd_place_control_center", "", "Places C&C BriefCase if picked up.", array())

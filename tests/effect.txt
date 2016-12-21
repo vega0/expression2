@@ -1,0 +1,6 @@
+@name Test effect
+
+Effect = effect():setSurfaceProp(entity():id())
+
+print(Effect)
+

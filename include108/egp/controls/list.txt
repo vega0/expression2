@@ -1,0 +1,115 @@
+@persist Lists:table
+
+#constants
+@persist [EGP_LIST_CLICK_SOUND ]:string EGP_LIST_SPACING
+@persist [EGP_LIST_BACKGROUND EGP_ITEM_BACKGROUND EGP_LIST_SELECT_COLOR]:vector
+
+#dynamic
+@persist EgpListYSize
+
+
+
+if(first())
+{
+    #ifndef array e_alloc(number)
+        #include "include/indexmanager"
+    #endif
+    
+    #ifndef void die(string)
+        #include "include/debugtools"
+    #endif
+    
+    function table table:setitem(Id:number, Value:string)
+    {
+    }
+    
+    function table wirelink:list(Parent:table, Ident:string, Items:array, Pos:vector2, Size:vector2)
+    {
+        local List = table()
+        
+        local IAlloc = e_alloc(Items:count() + 1)
+        local TAlloc = e_alloc(Items:count())
+        
+        local Id = IAlloc:shiftNumber()
+        
+        This:egpBox(Id, Pos, Size)
+        This:egpColor(Id, EGP_LIST_BACKGROUND)
+        
+        local UPoint = vec2(Pos:x(), Pos:y() - Size:y()/2)
+        
+        foreach(K, V:number = IAlloc)
+        {
+            This:egpBox(V, UPoint + vec2(1,EGP_LIST_SPACING*K), vec2(Size:x() - 20, EgpListYSize))   
+            This:egpColor(V,EGP_ITEM_BACKGROUND)
+        }
+        
+        foreach(K, V:number = TAlloc)
+        {
+            This:egpText(V, Items:string(K), UPoint + vec2(1,EGP_LIST_SPACING*K))
+            This:egpAlign(V, 1, 1)   
+        }
+        
+        List["id", number] = Id
+        List["ident", string] = Ident
+        List["items", array] = IAlloc
+        List["labels", array] = TAlloc
+        List["array", array] = Items
+        
+        Lists:pushTable(List)
+        return List
+        
+    }   
+    
+    EgpListYSize = 25
+    
+    if(!EGP_LIST_BACKGROUND) {EGP_LIST_BACKGROUND = vec(200,200,200)}
+    if(!EGP_ITEM_BACKGROUND) {EGP_ITEM_BACKGROUND = vec(100,100,100)}
+    if(!EGP_LIST_SELECT_COLOR) {EGP_LIST_SELECT_COLOR = vec(0,0,0)}
+    if(!EGP_LIST_CLICK_SOUND) {EGP_LIST_CLICK_SOUND = "ui/buttonclickrelease.wav"}
+    if(!EGP_LIST_SPACING) {EGP_LIST_SPACING = EgpListYSize+5}
+}
+
+if(first())
+{
+    function void frame_list_handler(Name:string, Item:number, List:table)
+    {die("List control included but function not defined.")}   
+    
+    function void table:list_use()
+    {
+        local Items = This["items", array]  
+        
+        foreach(K, V:number = Items)
+        {
+            if(W:in_bounds(V, Cursor))
+            {
+                W:egpColor(V, EGP_LIST_SELECT_COLOR)
+                entity():soundPlay("click", 0.5, EGP_LIST_CLICK_SOUND)
+                frame_list_handler(This["ident", string], K, This)
+            }   
+            else
+            {
+                W:egpColor(V, EGP_ITEM_BACKGROUND)   
+            }
+        }
+    }
+}
+
+
+if(EgpUses)
+{
+    for(K = 1, Lists:count())
+    {
+        if(!perf())
+        {
+            break   
+        }   
+        
+        local V = Lists[K, table]
+        
+        if(W:in_bounds(V["id", number], Cursor))
+        {
+            V:list_use()
+            break
+        }
+    }
+}

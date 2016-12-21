@@ -1,0 +1,10 @@
+@inputs Hud_Egp:wirelink
+#include "include108/findutils"
+
+#ifdef entity:writelink()
+    local E = find_by_class("gmod_wire_egp_hud"):shiftEntity()
+    if(!E) {error("You must put EGP HUD near this expression2.")}
+    Hud_Egp = E:wirelink()
+#else
+    print("Warning! wirelink is not woking enaught. Make it in manually.")
+#endif

@@ -1,0 +1,127 @@
+@persist [ChatCommands_Data ChatCommands_TypeExplanation]:table
+@persist CHAT_COMMAND_PREFIX:string
+@persist CmdDepth
+
+if(first()) {
+    CHAT_COMMAND_PREFIX = "#"
+    CmdDepth = -1
+
+    ChatCommands_TypeExplanation = table(
+        "N" = "number",
+        "P" = "Player",
+        "S" = "string"
+    )
+    ChatCommands_Data["Object", string] = "cmd_group"
+
+    function number decode_array_types(Types:string, Arr:array) {
+        if(Types:length() != Arr:count()) {
+            if(Types:length() > Arr:count()) {
+            
+            }elseif(Types:length() < Arr:count()) {
+        
+            }
+            return 0
+        }
+
+        for(I = 1, Types:length()) {
+            switch(Types:index(I)) {
+                case "N", # Number
+                    Arr[I, number] = Arr[I, string]:toNumber() 
+                break
+                case "P", # Player
+                    local Pl = findPlayerByName(Arr:string(I))
+                    if(Pl){
+                        Arr[I, entity] = Pl}
+                    else{
+                        print(format("Player '%s' not found.", Arr:string(I)))
+                        return 0}
+                break
+            }
+        }
+        
+        return 1
+    }
+    
+    function string command_get_info_object(K:string, T:table) {
+        switch(T["Object", string]) {
+            case "cmd",
+                local Arguments = ""
+                for(I = 1, T["Types", string]:length()){
+                    Arguments += format("%s: %s, ", T["argnames", array]:string(I), 
+                        ChatCommands_TypeExplanation[T["Types", string]:index(I), string])}
+                return format("%s [%s] --[[%s]]", K, Arguments, T["descr", string])
+            break
+            
+            case "cmd_group",
+                return format("%s (%s)", K, T["descr", string])
+            break
+        }
+        
+        return ""
+    }
+    function command_help(T:table) {
+        CmdDepth++
+        foreach(K, V:table=T) {
+            print("\t":repeat(CmdDepth) + command_get_info_object(K, V))
+            if(V["Object", string] == "cmd_group") {command_help(V)}
+        }
+        CmdDepth--
+    }
+
+    function command_handler(Args:array){
+        local Pl = lastSpoke()
+        local Msg = lastSaid()
+        local Pref = Msg:left(CHAT_COMMAND_PREFIX:length())
+        if(CHAT_COMMAND_PREFIX != Pref) {return}
+        Msg = Msg:right(Msg:length() - CHAT_COMMAND_PREFIX:length()):replaceRE("[ ]+", " "):replaceRE("^ ", "")
+        local Arr = Msg:explode(" ")
+        if(Pl == owner()) {hideChat(1)}
+        
+        local T = ChatCommands_Data[Arr:shiftString(), table]
+        while(T:keys():count()) {
+            if(T["Object", string] == "cmd"){
+                local Decoded = decode_array_types(T["Types", string], Arr)
+                if(Decoded) {
+                    T["Func", string](Arr)}
+                return}
+            if(Arr:count()) {
+                T = T[Arr:shiftString(), table]}
+            else {
+                command_help(T)
+                return}}
+        printColor(vec(255), "Command ", 
+            vec(0,0,255), Msg,
+            vec(255,0,0), " Not found.")
+        fire_event("command_not_found", array(Msg))
+    }
+    register_event("on_player_say", "command_handler")
+    
+    function table table:cmd_group(Name:string, Descr:string) {
+        local T = table()
+        T["Object", string] = "cmd_group"
+        T["descr", string] = Descr
+        T["Name", string] = Name
+        This[Name, table] = T
+        return T}
+    
+    function table table:cmd_reg(Name:string, Func:string, ArgTypes:string, Descr:string, ArgNames:array) {
+        if(This["Object", string] != "cmd_group") {return This}
+        local T = table()
+        T["Object", string] = "cmd"
+        T["Func", string] = Func
+        if(ArgTypes:length()){
+            T["Types", string] = ArgTypes:replaceRE("[ ]+", "")}
+        T["descr", string] = Descr
+        if(ArgNames:count()){
+            T["argnames", array] = ArgNames}
+        T["Name", string] = Name
+        This[Name, table] = T
+        return This}
+    
+    function help_cmd(Args:array) {
+        print("~Commands~")
+        command_help(ChatCommands_Data)
+    }
+    ChatCommands_Data:cmd_reg("help", "help_cmd", "", "Type to show this message.", array())
+    print(format("ChatCommands initialized. Type %shelp to show help message", CHAT_COMMAND_PREFIX))
+}

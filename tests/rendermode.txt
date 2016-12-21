@@ -1,0 +1,21 @@
+@persist Counter
+@trigger none
+
+if(first())
+{
+    runOnTick(1)
+    
+    timer("brute", 1)   
+}
+
+if(clk("brute"))
+{
+    timer("brute", 2 * 1000)   
+    
+    entity():isWeldedTo():setRenderMode(Counter)
+    entity():isWeldedTo():soundPlay(1, 0, "buttons/lightswitch2.wav")
+
+    print("Rendermode ", Counter)
+    
+    Counter++
+}

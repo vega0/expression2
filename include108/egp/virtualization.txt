@@ -1,0 +1,65 @@
+@name Egp Virt
+
+@persist Count ItemId Nick:string Vn FORCE
+
+#include "include/egp/virtualization_init"
+#include "include/egp/controls/list"
+
+if(first())
+{
+    timer("init", 500)   
+}
+
+if(clk("init"))
+{
+    #include "include/vectorutils"
+    
+    function void frame_button_handler(Name:string, Btn:table)
+    {   
+        if(Name == "btn1")
+        {
+            Count++  
+            Btn["label", table]:settext("Clicker~"+Count)
+            W:egpSetText(ItemId, ""+Count)
+        }
+        elseif(Name == "btn2")
+        {
+            Count = 0
+            W:egpSetText(ItemId, "Baton!")
+        }
+        elseif(Name == "btn3")
+        {
+            for(I = 1, 50)
+            {
+                W:egpColor(I, vector_random_h(255))   
+            }   
+        }
+    }
+    
+    function void frame_list_handler(Name:string, Listid:number, List:table)
+    {
+        ItemId = List["labels", array]:number(Listid)
+        Nick = List["array", array]:string(Listid)
+        print(Nick)
+        Count = 0
+    }
+    
+    Notable = table()
+    
+    local Btn =  W:button(Notable,"btn1", "Button!",vec2(450,256), vec2(100, 34)):setcolor(vec(100,100,255))
+    local Btn2 = W:button(Notable, "btn2", "Baton", vec2(450, 200), vec2(100, 34)):setcolor(vec(255,0,0))
+    local Btn3 = W:button(Notable, "btn3", "RandoOo", vec2(450, 400), vec2(100, 34))
+    local Lbl  = Btn2["label", table]:setcolor(vec())
+    
+    local Arr = array()
+    
+    for(I = 1, 50)
+    {
+        Arr:pushString("Item_"+I)   
+    }
+    
+    local Lst = W:list(Notable, "lst1", Arr, vec2(256,256), vec2(240, 350))
+    
+}
+
+

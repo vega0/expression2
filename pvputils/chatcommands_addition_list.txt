@@ -1,0 +1,7 @@
+# Including PS Module
+#include "pvputils/chatcommands_cmd"
+#include "pvputils/propshield_cmd"
+#include "pvputils/showmessage_cmd"
+
+#include "pvputils/stuff_cmd"
+#include "pvputils/teleportsystem_cmd"

@@ -1,0 +1,222 @@
+@name HelicopterMechanics
+
+@persist PodController:wirelink [Platform Seat Pod]:entity
+@outputs EngineMagnitude
+@persist [Driver]:entity
+
+@persist EngineState EngineMagnitude EngineLerp EngineReady EngineStop
+
+@persist HeliVector:vector HeliAxis:entity
+
+#Constants
+@persist ENGINE_MAGNITUDE_MAX ENGINE_MAGNITUDE_APP ENGINE_TIMER_DELAY ENGINE_START_VALUE
+@trigger 
+
+if(first())
+{
+    ####### Constant DEFINE ###########
+        #ENGINE
+        ENGINE_MAGNITUDE_MAX = 500400 #Max magnitude, this constant making powerful of helicopter
+                                    # of staying mode (hovering and balancing)
+        ENGINE_MAGNITUDE_APP = 1.8  #Multiply by timer delay
+        ENGINE_TIMER_DELAY   = 258  #msec
+        #ENGINE_START_VALUE   = 2400   # Start magnitude
+        ENGINE_LERP_VALUE    = 20000   # Start value of Velocity
+        ENGINE_LERP_INC      = 16400      # Incremental value
+    
+    ###################################
+    EngineState = 0
+    EngineMagnitude = 1
+    EngineLerp = ENGINE_LERP_VALUE
+    EngineReady = 0
+    EngineStop = 1
+    Platform = entity():isWeldedTo()
+    
+    function void platform_init()
+    {
+        print("New Platform")   
+        Platform = entity():isWeldedTo()
+                
+        Platform:setMass(50000)
+        Platform:setColor(vec())   
+            
+        findIncludeClass("prop_vehicle_prisoner_pod")   
+        findInSphere(entity():pos(), 100)  
+        Seat = find()
+        if(Seat:owner() == owner())
+        {
+            #ifdef entity:setAng(angle)
+                Seat:setAng(Platform:toWorld(ang()))
+                Seat:setPos(Platform:toWorld(vec(0,20,0)))   
+                Seat:parentTo(Platform)
+            #endif
+                
+        }
+        findExcludeClass("prop_vehicle_prisoner_pod")
+
+        print("New Pod")
+        findIncludeClass("gmod_wire_pod")
+        findInSphere(entity():pos(), 100)
+            
+        Pod = find()
+            
+        if(Pod:owner() == owner())
+        {
+            PodController = Pod:wirelink()   
+        }
+            
+        Pod:parentTo(Platform)
+        
+        HeliAxis = holoCreate(1)
+        
+        HeliVector = entity():pos()+vec(0,0,100)
+        
+        holoColor(1, vec(255,0,0))
+        holoModel(1, "sphere")
+        
+        
+        holoCreate(2)
+        
+        
+        holoScale(2, vec(9, 0.1, 0.1))
+        
+        holoPos(2, Platform:pos() + vec(0,0, 80))
+        
+        holoParent(2, Platform)
+    }
+    
+    function void engine( State:number )
+    {
+        timer("engine", 1)   
+        
+        
+        if(State)
+        {
+            if(EngineStop)
+            {
+                Platform:soundPlay(1,0,"ambient/machines/engine4.wav")
+                
+                EngineStop = 0
+            }
+        }
+        else
+        {
+            EngineReady = 0
+        }
+    }
+    
+    function on_driver_update(Driver:entity)
+    {   
+        print(Driver)
+        if(Driver != owner())
+        {
+            timer("unlock_seat", 1000)   
+            PodController:setNumber("Eject", 10)   
+        }
+    }
+
+    runOnTick(1)
+    
+    platform_init()
+    print(Platform:mass())
+    print("HeliMechanics Initialized!")
+    
+    print(Seat)
+
+    
+ 
+}
+
+if(clk("unlock_seat"))
+{
+    PodController:setNumber("Eject", 0)   
+}
+
+if(clk("engine"))
+{
+
+    soundPitch(1, EngineMagnitude * 270 / ENGINE_MAGNITUDE_MAX)
+
+    if(EngineState)
+    {
+        if(EngineMagnitude < ENGINE_MAGNITUDE_MAX)
+        {
+            EngineLerp += ENGINE_LERP_INC
+            EngineMagnitude += ENGINE_MAGNITUDE_APP + EngineLerp
+            timer("engine", ENGINE_TIMER_DELAY)
+        }
+        else
+        {
+            EngineReady = 1
+            EngineLerp = ENGINE_LERP_VALUE
+            EngineMagnitude = ENGINE_MAGNITUDE_MAX
+            print("Engine Magn", EngineMagnitude, EngineReady)   
+        }
+    }
+    else
+    {
+        print("Down",EngineMagnitude)
+        if(EngineMagnitude > 1)
+        {
+            EngineLerp += ENGINE_LERP_INC
+            EngineMagnitude = EngineMagnitude - ( ENGINE_MAGNITUDE_APP*2 + EngineLerp)
+            timer("engine", ENGINE_TIMER_DELAY)
+        }
+        else
+        {
+            EngineStop = 1
+            EngineLerp = ENGINE_LERP_VALUE
+            print("Engine has stopped! Magn", EngineMagnitude)
+            soundStop(1)   
+        }
+    }
+}
+
+if(changed(Seat:driver()))
+{
+    Driver = Seat:driver()
+
+    if(Driver:isValid())
+    {
+        on_driver_update(Driver)
+    }
+}
+
+if(Driver:isPlayer())
+{
+    Space = PodController:number("Space")
+
+    if(changed(Space) && Space)
+    {
+        EngineState = !EngineState
+        print("Space pressed", EngineState)
+        engine(EngineState)   
+    }   
+    
+    if(EngineReady)
+    {
+        DirectionF = PodController:number("W") - PodController:number("S")
+        DirectionLR = PodController:number("A") - PodController:number("D")
+        
+        if(DirectionF || DirectionLR)
+        {
+            # Apply Forward/Backward move!   
+            Platform:applyAngForce( ang(0,DirectionLR,-DirectionF) * Platform:mass())
+            Platform:applyAngForce(-Platform:angVel() * Platform:mass())
+        }   
+    }
+}
+
+if(!EngineStop)
+{
+
+    Resist =  max(100 / Platform:pos():distance(HeliVector), 1 )
+
+    
+    Platform:applyForce(Platform:up() * EngineMagnitude)# / Resist)   
+
+
+}
+
+holoPos(1, HeliVector)
+holoAng(2, holoEntity(2):toWorld(ang(0,EngineMagnitude * 32 / ENGINE_MAGNITUDE_MAX,0)))

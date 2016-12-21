@@ -1,0 +1,14 @@
+@name Seat Test
+@persist Seat:entity Offset:vector
+@trigger none
+
+if(first()) {
+    Seat = entity():isWeldedTo()
+    runOnTick(1)
+    Offset = vec(89.999550, 0.005238, 0)
+    Seat:setPos(Seat:toWorld(Offset))
+}
+
+local A = owner():angles()
+Seat:setAng(ang(A:pitch(), A:yaw(), 0))
+print(Seat:toLocal(owner():pos()))

@@ -1,0 +1,7 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+Ent = seatSpawn("models/props_c17/FurnitureChair001a.mdl", entity():pos()+vec(0,0,50), ang(), 1)

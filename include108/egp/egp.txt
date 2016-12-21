@@ -1,0 +1,45 @@
+@name EGP
+@inputs Egp_User:entity W:wirelink
+@trigger none
+
+@persist [Data OpStack]:table Alloc:array
+
+#groups
+@persist [Clickable Hover]:table
+
+if(first())
+{
+    runOnTick(1)   
+    
+    #include "include/debugtools"
+    #include "include/egp/utils"
+    
+    for(I = 1, egpMaxObjects())
+    {
+        Alloc:pushNumber(I)   
+    }
+    info_print("Egp objects " + Alloc:count())
+    
+    function table create_object(Parent:table, Name:string )
+    {
+           
+    }
+    
+    W:egpClear()  
+}
+
+
+if(OpStack:count() > 0)
+{
+    if(perf())
+    {
+        local Op = OpStack:popTable()
+        local OpS = Op["op", string]
+        local Params = Op["params", array]
+        
+        if(OpS == "box")
+        {
+            
+        }
+    }
+}

@@ -1,0 +1,65 @@
+function number array:find(Ent:entity)
+{
+    foreach(K, V:entity = This)
+    {
+        if(V == Ent)
+        {
+            return K
+        }   
+    }   
+    return 0
+}
+
+function number array:find(Number)
+{
+    foreach(K, V:number = This)
+    {
+        if(V == Number)
+        {
+            return K   
+        }   
+    }   
+    return 0
+}
+
+function number array:find(String:string)
+{
+    foreach(K, V:string = This)
+    {
+        if(V == String)
+        {
+            return K   
+        }   
+    }   
+    return 0
+}
+
+function number array:remove_entity(Ent:entity)
+{
+    foreach(K, V:entity = This)
+    {
+        if(V == Ent)
+        {
+            This:remove(K)
+            return K 
+        }   
+    }
+    return 0   
+}
+
+
+function string table:find_string_in_arrays(String:string)
+{
+    foreach(K, V:array = This)
+    {
+        foreach(K2, V2:string = V)
+        {
+            if(V2 == String)
+            {
+                return K
+            }
+        }   
+    }   
+    return ""
+}
+

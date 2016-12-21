@@ -1,0 +1,1 @@
+expression2/cc_strategic_control_center/command_and_conquer_center.txt;expression2/cc_strategic_control_center/entities_setup.txt;expression2/cc_strategic_control_center/commands_setup_1.txt;expression2/include/chatcommands.txt

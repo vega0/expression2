@@ -1,0 +1,15 @@
+function vector vector_random_g(Seed)
+{
+    return vec(random(Seed*-1, Seed), random(Seed*-1, Seed), random(Seed*-1, Seed)) * Seed*random(-1,1)
+}
+
+function vector vector_random_h(Mul)
+{
+    return vec(random(0,1), random(0, 1), random(0, 1)) * Mul
+}
+
+function vector vector_random(Mul)
+{
+    return vec(random(-1,1), random(-1, 1), random(-1, 1)) * Mul
+}
+

@@ -1,0 +1,18 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+#USAGE
+
+#include "include/chatcommands"
+
+if(first())
+{
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        print(Cmd, Ply, Args)   
+    }   
+}
+

@@ -1,0 +1,24 @@
+@name CHAIR_TELE
+@persist TO:string Seat:entity
+@trigger none
+
+if(first()) {
+    TO = "MrNaki"
+    Seat = entity():isWeldedTo()
+    local Pl = findPlayerByName(TO)
+    Seat:setPos(Pl:pos() + vec(0,0,50))
+    Seat:propFreeze(1)
+    runOnTick(1)
+    print(Pl:name())
+}
+
+if(changed(Seat:driver()) && Seat:driver() != noentity()) {
+    Seat:setPos(owner():pos() + vec(0,0, 100))
+    print("slt")
+    timer("DESTRUCT", 1000)
+}
+
+if(clk("DESTRUCT")) {
+    selfDestructAll()
+    print("dstrct rm")   
+}

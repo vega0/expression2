@@ -1,0 +1,68 @@
+# PLAYER EXTENSIONS API
+# A COUPLE FUNCTIONs TO MAKE GAME MUCH BETTER >:)
+
+@persist LOCK_PLAYER_EXTENSION
+@persist [BlindTable_Players ShootBlock_PropTable]:table
+@persist [SHOOT_GAG_MODEL ATTACHMENT_BLIND_POS]:string
+@persist MATERIAL_STEALTH:string
+
+#include "include/holo_allocator"
+
+SHOOT_GAG_MODEL = "models/hunter/blocks/cube025x025x025.mdl"
+ATTACHMENT_BLIND_POS = "eyes"
+MATERIAL_STEALTH = "models/airboat/airboat_blur02"
+    
+# Set blind state for player
+# Player - entity
+# Flag - state (0/1)
+function void set_blind(Player:entity, Flag:number) {
+    local ST_id = Player:steamID()
+    if (Flag) {
+        if(!BlindTable_Players[ST_id, number]) {
+            local ID = HoloIds:popNumber()
+            holoCreate(ID, Player:attachmentPos(ATTACHMENT_BLIND_POS), vec(-4), ang(), vec(255,0,0),
+                "models/holograms/hq_icosphere.mdl")
+            holoParentAttachment(ID, Player, ATTACHMENT_BLIND_POS)
+            holoVisible(ID, players(), 0)
+            holoVisible(ID, Player, 1)
+            BlindTable_Players[ST_id, number] = ID
+        }
+    } else {
+        if(BlindTable_Players[ST_id, number]) {
+            holoDelete(BlindTable_Players[ST_id, number])
+            HoloIds:pushNumber(BlindTable_Players[ST_id, number])
+            BlindTable_Players:removeNumber(ST_id)   
+        }
+    }
+}
+
+# Disable shoot function of
+# Player - Player entity (Target)
+function void disable_shooting_of(Player:entity) {
+    if (!ShootBlock_PropTable[Player:steamID(), number]) {
+        local ID = HoloIds:popNumber()
+        holoCreate(ID)
+        holoPos(ID, Player:shootPos())
+        holoParentAttachment(ID, Player, "righthand")
+        local Ent = propSpawn(SHOOT_GAG_MODEL, owner():pos()+vec(0,0, 250), ang(0,0,0), 1)
+        Ent:parentTo(holoEntity(ID))
+        ShootBlock_PropTable[Player:steamID(), number] = ID
+    }
+}
+
+# Make player invisible
+# Player - target entity player
+# Flag - state (0/1)
+function void player_stealth(Player:entity, Flag:number) {
+    if (Flag) {
+        Player:setMaterial(MATERIAL_STEALTH)
+        Player:setColor(vec4(0,0,0,0.1))
+        #Player:setSubMaterial(1, MATERIAL_STEALTH)
+    } else {
+        Player:setMaterial("")
+        Player:setColor(vec4(255))
+    }
+}
+
+
+

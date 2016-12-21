@@ -1,0 +1,99 @@
+@name Elevator
+@inputs Platform:entity Correct Stage SavePoint 
+@outputs Index
+@persist PlatformPoint:vector Points:array 
+@persist TIMER_VALUE ELEVATOR_SPEED_MULTIPLIER
+@persist Lock1 
+@trigger none
+
+interval(1)
+
+if(first() || dupefinished())
+{
+    TIMER_VALUE = 100
+    ELEVATOR_SPEED_MULTIPLIER = 12
+
+
+    #ifdef entity:propSpawn(string, vector, angle, number)
+        if(!Platform:isValid())
+        {
+            Platform = propSpawn("models/props_phx/construct/metal_plate1x2.mdl", entity():pos() + vec(0,0,50), ang(), 1)   
+        }
+    #endif
+    
+    if(Platform:isValid())
+    {
+        Platform:setMass(50000)   
+    }
+    
+    PlatformPoint = entity():pos() + vec(0,0,20)
+    
+    function void platform_lock(State:number)
+    {
+
+        #ifdef entity:propFreeze(number)
+            Platform:propFreeze(State)
+        #endif    
+        Lock1 = State
+        
+        if(State){print("Locked!")}
+
+    }
+    
+    Index = 0
+}
+if(Correct){PlatformPoint += vec(0,0,Correct) platform_lock(0)}
+
+if(clk("point_smooth_change"))
+{
+    local Distance = Platform:pos():distance(Points:vector(Index))
+    #print(Distance)
+    if(Distance > 5)
+    {
+            timer("point_smooth_change", TIMER_VALUE)
+            local Arr = PlatformPoint:z() > Points:vector(Index):z() ? -1 : 1
+            PlatformPoint = PlatformPoint + vec(0, 0, Arr) * ELEVATOR_SPEED_MULTIPLIER
+    }
+    else
+    {
+        PlatformPoint = Points:vector(Index)
+        platform_lock(1)
+    }
+}
+
+if(changed(SavePoint) & SavePoint)
+{
+    Points:pushVector(PlatformPoint)
+    Index = Points:count()
+    hint("Point saved", 10)
+}
+
+if(changed(Stage) && (Stage > 0 || Stage < 0))
+{
+
+    if(Points:count() > 0)
+    {
+        if(Index <= Points:count() && Index > 0)
+        {
+            Index = Index + Stage
+        }        
+        timer("point_smooth_change", 1)
+        
+        platform_lock(0)
+        
+    }
+    else
+    {
+        hint("No points in array!", 1)   
+    }
+}
+
+if(!Lock1)
+{
+    EntityVector = Platform:massCenter()
+    Leverage = sqrt( ( Platform:inertia():length()^2 ) / 3 )
+    EntityAngle = ( ( Platform:angles() - angnorm(ang()) ) * 5 + Platform:angVel() ) * 5
+    Platform:applyAngForce( -EntityAngle * Leverage ) 
+    Platform:applyForce(((PlatformPoint - Platform:pos())*5 - Platform:vel()) * Platform:mass())
+}
+

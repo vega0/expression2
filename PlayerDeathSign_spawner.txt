@@ -1,0 +1,48 @@
+@name DeathSign Spawner
+@trigger none
+@persist Ids_:array
+#include "include/events"
+
+if(first()) {
+    EVENT_HANDLE_CHAT = 0
+    EVENT_HANDLE_PLAYERS_EXTRA = 0
+    EVENT_HANDLE_PLAYERS = 1
+    
+    #include "include/holo_allocator"
+    
+    function void create_death_sign(Ent:entity) {
+        local Ids = holo_get_array(1)
+        local Id = Ids:shiftNumber()
+        holoCreate(Id, Ent:pos() + vec(0,0, 30), vec(5,5,5), ang(0,0, Ent:angles():roll()))
+        holoModel(Id, "tetra")
+        holoColor(Id, vec(150))
+        holoEntity(Id):setMaterial("phoenix_storms/stripes")
+        holoEntity(Id):setAlpha(255)
+        #holoParent(Id, Ent)
+        local Prev = Id
+        Ids_:pushNumber(Id)
+    }
+    
+    function ev_player_death(Args:array) {
+        local Player = Args:entity(1)
+        print("Player", Player:name(), "Has Been Deatch")
+        create_death_sign(Player)
+    }
+    register_event("on_player_death", "ev_player_death")
+    
+    create_death_sign(entity())
+}
+
+foreach(K, V:number = Ids_) {
+    local E = holoEntity(V)
+    local A = E:getAlpha()
+    if(A > 0) {
+        E:setAlpha(A - 1)
+        E:setPos(E:pos() + vec(0,0,1))
+        E:setAng(E:angles() + ang(0,1,0))
+        #holoScale(V, holoScale(V) + vec(0.1))
+    } else {
+        holo_free_id(V)
+        Ids_:removeNumber(K)
+    }
+}

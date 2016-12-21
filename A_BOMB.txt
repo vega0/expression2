@@ -1,0 +1,71 @@
+@name A_BOMB
+@outputs Seconds
+@persist [Target Player]:entity
+@persist Color:vector
+@persist Flag1 Flag2 Sound:string
+@persist Multiplier AMPLIFY MoveOn
+@trigger none
+
+if (first()) {
+    Target = entity():isWeldedTo()
+    Color = vec(255,0,0)
+    Target:setColor(Color)
+    Target:setMass(50000)
+    Sound = "buttons/button1.wav"
+    runOnTick(1)
+    timer("start", 1)
+    findIncludeClass("player")
+    
+    function entity player_selection(Arr:array) {
+        local SortedPlayer = Arr[1, entity]
+        for (I = 2, Arr:count()) {
+            if (Arr[I, entity]) {
+                if (SortedPlayer:pos():distance(Target:pos()) > 
+                    Arr[I, entity]:pos():distance(Target:pos())) {
+                    SortedPlayer = Arr[I, entity]   
+                }
+            }
+        }
+        return SortedPlayer
+    }
+
+    Multiplier = 255
+    AMPLIFY = 2
+    MoveOn = 1
+}
+
+if (clk("start")) {
+    if(Flag1) {Target:setColor(Color)}
+    else {Target:setColor(255,255,255)}
+    Flag1 = !Flag1
+    findInSphere(entity():pos(), 100)
+    Player = player_selection(findToArray())
+    print(Player)
+    if (Player) {
+        if (!Flag2) {
+            Flag2 = !Flag2
+            Multiplier *= AMPLIFY
+        }
+        timer("PowerTo", 500)
+    } else {
+        if (Flag2) {
+            Flag2 = !Flag2
+            Multiplier /= AMPLIFY
+        }
+        timer("start", 1000)
+    }
+    Target:applyForce(vec(0,0,1) * Target:mass()*Multiplier)
+    
+    if (MoveOn) {
+        findInSphere(entity():pos(), 999)
+        if(findCount()) {
+            Target:applyForce((player_selection(findToArray()):pos() - Target:pos()) * Target:mass()*0.1)
+        }
+    }
+}
+
+if (clk("PowerTo")) {
+    Target:applyForce((Player:pos() - Target:pos()) * Target:mass()^2)
+    timer("start", 1000)
+    print("POWER_1")
+}

@@ -1,0 +1,11 @@
+@name 
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+interval(1000)
+
+R = rangerOffsetHull(entity():pos(), owner():pos(), vec())
+
+print(R:entity():isPlayer())

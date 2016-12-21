@@ -1,0 +1,96 @@
+@name PvpUtils V0.1
+@trigger none
+#@model models/props_lab/servers.mdl
+# 
+@persist F1 F2 F3 F4 F5 F6 F7 F8 F9 
+
+if(first())
+{
+    ##include "include/debugtools"
+    ##include "include/arrayutils"
+    ##include "include/indexmanager"
+    
+    #PROPSHIELD_LAGG_FIX_ENABLED = 1 #Enable it if #ps on vector moving
+    PROPSHIELD_SOUNDS_ENABLE = 1
+    
+    #DEBUG SETTING
+    DEBUG_PREFIX = "PVP Utils"
+    DEBUG_DISPLAY_WARNINGS = 1 #isplay warnings.
+    DEBUG_DISPLAY_DEBUG = 1 #display debug messages
+    
+    #Teleport system settings
+    #TS_TELEPORT_MODEL =
+    TS_FILE_PREFIX = "jpvp3_" #prefix of files with point data.
+    
+    #CHAIR MODEL
+    # models/chairs/armchair.mdl
+    #TUBE WITH PROPELLER MODEL
+    # models/maxofs2d/thruster_propeller.mdl
+    #WEIRD SHIT
+    # models/maxofs2d/hover_rings.mdl
+    #SPHERE CAPSULE
+    # models/maxofs2d/hover_basic.mdl
+    #HAT
+    # models/player/items/humans/top_hat.mdl
+    
+    ##include "include/entity/protection"
+
+    timer("f1", 1000)
+    print("f1")
+    
+    runOnTick(1)
+    
+}
+if(clk("f1") || F1)
+{
+    #F1 = 1
+    #ifdef entity:wirelink()
+        #include "pvputils/showmessage"
+        if(changed(F1))
+        {
+            info_print("Showmessage module included")
+        }
+    #endif
+    timer("f2", 1000)
+}
+
+if(clk("f2") || F2)
+{
+    #F2 = 1
+    #include "pvputils/propshield"
+    if(changed(F2))
+    {
+        info_print("Propshield module included")
+    }
+    timer("f3", 1000)
+}
+
+if(clk("f3") || F3)
+{
+    #F3 = 1   
+    #ifdef entity:wirelink()
+    #include "pvputils/teleportsystem"
+    if(changed(F3))
+    {
+        info_print("Teleportsystem module included")
+    }
+    #else
+    error_print("Wirelink error (Telesys)")
+    #endif
+    timer("f4", 1000)
+}
+
+if(clk("f4") || F4)
+{
+    #F4 = 1
+
+    #include "pvputils/chatcommands"
+    if(changed(F4))
+    {
+        info_print("Commands loaded")
+    }
+ 
+}
+
+
+

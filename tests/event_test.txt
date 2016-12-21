@@ -1,0 +1,13 @@
+@name EVENT TEST
+@trigger none
+
+#include "include/events"
+
+if(first()) {
+    function void on_owner_death(Args:array) {
+        if(Args:entity(1) == owner()) {
+            print("YOU DIED!", Args)
+        } 
+    }
+    register_event("on_player_death", "on_owner_death")
+}

@@ -1,0 +1,25 @@
+@persist LOCK_OBJECT_MANAGER
+@persist ObjectManager_UsedEntities:table
+
+# Module to use as object find, busy, register interface.
+
+if(!LOCK_OBJECT_MANAGER) {
+    LOCK_OBJECT_MANAGER = 1
+    
+    #include "include/globals"
+    
+    function array object_find_all() {
+        findIncludePlayerProps(owner())
+        findExcludePlayer(owner():name())
+        findInSphere(entity():pos(), 9999)
+        local Ret = findToArray()
+        findExcludePlayerProps(owner())
+        return Ret   
+    }
+    function entity object_find(Class:string) {}
+    
+    object_find("")
+    if(DEBUG) {
+        print(findByName("Weapon"))
+    }
+}

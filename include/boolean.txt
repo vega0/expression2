@@ -1,0 +1,3 @@
+# Boolean syntax extension
+True = 1
+False = !True

@@ -1,0 +1,87 @@
+if(Cmd == "ts")
+{
+    
+    if(Ply == owner())
+    {
+        hideChat(1)   
+    }
+    
+    Cmd = Args:shiftString()
+    
+    if(Cmd == "dump")
+    {
+        if(Ts_Locations:count() > 0)
+        {
+            printTable(Ts_Locations)   
+        }
+        else
+        {
+            error_print("Locations table is empty!")   
+        }
+    }
+    
+    if(Cmd == "create")
+    {
+        local Name = Args:shiftString()
+        
+        if(Name)
+        {
+            info_print("Creating Warp point with name '" + Name + "'!")   
+            ts_set(Name, Ply:pos())
+            
+            Ply:message_showc("Warp '" + Name + "' Created Successful!", 2, vec(0,255,0))
+        }   
+    }  
+    
+    if(Cmd == "warp")
+    {
+        local Name = Args:shiftString()
+        
+        if(Name)
+        {
+            if(!Ply:warp_to(Name))
+            {
+                warn_print("Something wrong with Teleport Warp?")   
+            }
+        }
+    }
+    
+    if(Cmd == "go")
+    {
+        local Target = findPlayerByName(Args:shiftString())
+        
+        if(Target:isValid())
+        {
+            info_print("Going to '" + Target:name() + "'!")
+            if(!Ply:warp_to(Target:pos()))   
+            {
+                warn_print("Something wrong with Teleport Warp?")  
+            }
+        }
+        else
+        {
+            Ply:message_showc("Player Not Found!", 2, vec(255,0,0))   
+        }  
+    }
+    
+    if(Cmd == "invite")
+    {
+        local Target = findPlayerByName(Args:shiftString())
+        
+        if(Target:isValid())
+        {
+            if(!Target:warp_to(Ply:pos()))   
+            {
+                warn_print("Something wrong with Teleport Warp?")  
+            }
+            else
+            {
+                Ply:message_showc("Invite sended to '" + Target:name() + "' successful! Waiting for Use.", 2, vec(0,255,0))   
+            }
+        }
+        else
+        {
+            Ply:message_showc("Player Not Found!", 2, vec(255,0,0))   
+        }
+    }
+}

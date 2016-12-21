@@ -1,0 +1,35 @@
+@name GodMode
+@persist Tar:entity
+@trigger none
+
+if(first())
+{
+    
+    Tar = findPlayerByName("$ad")
+    Ent = holoCreate(1)   
+    
+    holoPos(1,Tar:pos() + vec(0,0,-28))
+    
+    print(Tar)
+    holoParent(1, Tar)
+    
+    holoParentAttachment(1, Tar, "eyes")
+    
+    Ent2 = propSpawn("models/hunter/blocks/cube2x2x2.mdl", Ent:pos(), Tar:eyeAngles(), 0)
+    
+    Ent2:parentTo(Ent)
+    
+    Ent:setAlpha(0)
+    
+    Ent2:setAlpha(0)
+    
+    noCollide(Ent2, Tar)
+    
+    runOnTick(1)
+}
+
+Ent:setPos(Tar:pos())
+
+
+Ent2:setAlpha(0)
+

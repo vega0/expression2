@@ -1,0 +1,118 @@
+@name BuggySystem
+@inputs 
+@outputs 
+@persist [DotSeat Buggy Driver]:entity
+@persist InitStuff
+
+#Hologram positions
+@persist WeaponAxis1:entity
+
+#Models
+@persist WeaponModel1:entity
+
+#Fire
+@persist Bullets:array
+
+#Constants
+@persist DOT_SEAT_FIRE_DELAY
+@trigger none
+
+
+if(first())
+{
+    DOT_SEAT_FIRE_DELAY = 350
+    
+    DotSeat = entity():isWeldedTo()
+    
+    Buggy = DotSeat:isWeldedTo()   
+    
+    
+    runOnTick(1)
+    
+    
+    function void initialize_dot1()
+    {
+        if(Buggy:isValid())
+        {
+            WeaponAxis1 = holoCreate(1)
+            
+            holoPos(1, Buggy:toWorld(vec(6,-62,72)))
+            holoScale(1, vec(0.5, 0.5, 0.5))
+            holoColor(1, vec(255,0,0))
+            holoAng(1, Buggy:toWorld(ang(0,90,0)))
+            
+            holoModel(1, "sphere")
+            
+            holoParent(1, Buggy)   
+            
+            
+            if(WeaponModel1:isValid())
+            {
+                WeaponModel1:propDelete()
+            }
+            
+            WeaponModel1 = propSpawn("models/weapons/w_mach_m249para.mdl", holoEntity(1):toWorld(vec()), holoEntity(1):toWorld(ang()), 1)
+            WeaponModel1:parentTo(holoEntity(1))
+        
+        }
+    }
+    
+    initialize_dot1()   
+    
+    InitStuff = 0
+}
+
+if(InitStuff)
+{
+    if(clk("initialize_models"))
+    {
+    }   
+}
+
+if(changed(Buggy:driver()) && Buggy:driver():isValid())
+{
+    print("changed")
+}
+
+if(DotSeat:driver():isValid())
+{
+    
+    local DotSeatDriver = DotSeat:driver()
+    
+    holoAng(1, DotSeatDriver:eyeAngles())   
+    
+    if(changed(DotSeatDriver:keyAttack1()) && DotSeatDriver:keyAttack1())
+    {
+        timer("dot_seat_fire", 1)   
+    }
+    
+    if(clk("dot_seat_fire") && DotSeatDriver:keyAttack1())
+    {
+        WeaponModel1:soundPlay(1, 1, "weapons/m249/m249-1.wav")
+        timer("dot_seat_fire", DOT_SEAT_FIRE_DELAY)
+        propSpawnEffect(0)
+        local Ent = propSpawn("models/props_junk/watermelon01.mdl", WeaponModel1:toWorld(vec(0,0,10)), WeaponAxis1:angles(), 0)
+        
+        Ent:setMass(50000)
+        Ent:setColor(vec(255,0,0))
+        
+        Bullets:pushEntity(Ent)   
+    }
+}
+
+if(Bullets:count() > 0)
+{
+    for(I = 1, Bullets:count())
+    {
+        local Ent = Bullets:entity(I)
+        
+        if(!Ent:isValid())
+        {
+            Bullets:remove(I)   
+        }
+        else
+        {
+            Ent:applyForce(Ent:forward() * Ent:mass() * 20000000000)  
+        }
+    }   
+}

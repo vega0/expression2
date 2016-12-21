@@ -1,0 +1,32 @@
+if(owner())
+{
+    if(Cmd == "dump")
+    {
+        print("Buddy dump: ", Cmd_Buddies)   
+    }
+                    
+    if(Cmd == "add_to_buddy")
+    {
+        local Ply = findPlayerByName(Args:shiftString())
+                        
+        if(Ply:isValid())
+        {
+            info_print("'" + Ply:name() + "' ADDING TO ChatCommands USERS")
+                            
+            if(!cc_buddy(Ply))
+            {
+                hint("already in buddy list", 20)   
+            }
+        }   
+    }
+                    
+    if(Cmd == "remove_from_buddy")
+    {
+        local Ply = findPlayerByName(Args:shiftString())
+    
+        if(Cmd_Buddies:remove_entity(Ply))
+        {
+            info_print("Removed! '" + Ply:name() + "'")
+        }   
+    }
+}

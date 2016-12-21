@@ -1,0 +1,42 @@
+if(Cmd == "ps")
+{
+    Cmd = Args:shiftString()
+    
+    if(Ply == owner())
+    {
+        if(Cmd == "set")
+        {
+            local Ply = findPlayerByName(Args:shiftString())
+            
+            if(Ply:isPlayer())
+            {
+                if(!Ply:ps_enable())
+                {
+                    info_print("Shield disabled on "+ Ply:name())
+                    Ply:ps_disable()   
+                }
+                else
+                {
+                    info_print("Shield enabled on "+ Ply:name()) 
+                }
+            }
+        }   
+    }
+    
+    if(Cmd == "on")
+    {
+        if(!Ply:ps_enable())
+        {
+            Ply:message_showc("PROPSHIELD ALREADY ON!", 1, vec(255,0,0))   
+        }
+        else
+        {
+            Ply:message_show("PROPSHIELD DONE!", 1)   
+        }
+    }
+    
+    if(Cmd == "off")
+    {
+        Ply:ps_disable()   
+    }
+}

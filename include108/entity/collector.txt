@@ -1,0 +1,136 @@
+@persist [Collection Aliases]:table Classes:array
+
+if(first())
+{
+    #ifndef void assert(number, string)
+        #include "include/debugtools"
+    #endif   
+    
+    function number coll_add_rule(Class:string)
+    {
+        Classes:pushString(Class)
+    }
+    
+    function number coll_add_rule(Class:array)
+    {
+        foreach(K, V:string = Class)   
+        {
+            Classes:pushString(V)
+        }
+    }
+    
+    function number coll_aliase(Class:string, Aliase:string)
+    {
+        Aliases[Aliase, string] = Class   
+    }
+    
+    function array coll_get_class(Class:string)
+    {
+        local Array = Collection[Class, array]   
+        
+        if(Array:count() > 0)
+        {
+            return Array
+        }
+        else
+        {
+            error_print("No '" + Class + "' in collection table!")   
+        }
+    }
+    
+    function string coll_get_aliase(Name:string)
+    {
+        foreach(K, V:string = Aliases)
+        {
+            if(K == Name)
+            {
+                return V   
+            }
+        }          
+    }
+    
+    function void array:coll_g(Name:string, Aliase)
+    {        
+        local Array = coll_get_class(Aliase ? coll_get_aliase(Name) : Name)
+        
+        foreach(K, V:entity = Array)
+        {
+            This:pushEntity(V)      
+        }
+        
+    }
+    
+    function void array:coll_s_f(Name:string, Aliase)
+    {
+        This:pushEntity(coll_get_class(Aliase ? coll_get_aliase(Name) : Name):shiftEntity())    
+    }
+    
+    function void include_classes_and_buddies(Buddies:array)
+    {
+        if(Buddies:count() > 0)
+        {
+            foreach(K, V:entity = Buddies)
+            {
+                findIncludePlayerProps(V)   
+            }   
+        }
+        
+        findIncludePlayerProps(owner())
+        
+        foreach(K, V:string = Classes)
+        {
+            findIncludeClass(V)   
+        }         
+    }
+    
+    function void exclude_classes_and_buddies(Buddies:array)
+    {
+        if(Buddies:count() > 0)
+        {
+            foreach(K, V:entity = Buddies)
+            {
+                findExcludePlayerProps(V)   
+            }   
+        }
+        
+        findExcludePlayerProps(owner())
+        
+        foreach(K, V:string = Classes)
+        {
+            findExcludeClass(V)   
+        }      
+    }
+    
+    function void coll_f(Buddies:array)
+    {
+        include_classes_and_buddies(Buddies)
+        find()
+        Collection = findToTable()
+        findSortByDistance(entity():pos())
+        
+        print("fnd")
+        printTable(Collection)
+        print(Classes)
+        exclude_classes_and_buddies(Buddies)
+        
+        foreach(K, V:string = Classes)
+        {
+            if(Collection[V, array]:count() > 0)
+            {
+                info_print("Found '" + V + "' Count: " + Collection[V, array]:count())   
+            }
+            else
+            {
+                #error("Collect report. '" + V + "' Required!")   
+            }
+        } 
+    }
+    
+    coll_add_rule("gmod_wire_pod")
+    coll_add_rule("prop_vehicle_prisoner_pod")
+    
+    coll_f(array(owner()))
+    
+    printTable(Collection)
+    
+}

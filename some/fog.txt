@@ -1,0 +1,137 @@
+@name Fog :D
+@trigger none
+
+@persist [Wind Center]:vector Stack:array Angles:array I
+
+@persist FOG_TICKER FOG_SPAWN_DELAY FOG_CENTER_CALC_DELAY FOG_ALPHA_I FOG_SCALE_I:vector
+if(first())
+{
+    #include "include/indexmanager"
+    #include "include/vectorutils"
+    Wind = vec(random(-2, 20), random(-2, 2), random(1, 2))#vec(-0.4, 0.2, 0.1)
+    
+    function void create_simple_fog()
+    {
+        local Inc = holo_get_id()
+        holoCreate(Inc)
+        holoPos(Inc, entity():pos() + vec(random(-1,1), random(-1,1), 0)*200)
+        #holoColor(Inc, vec(100))
+        if(random(-1, 1) > 0)
+        {
+            holoScale(Inc, vec(1))
+        }
+        else
+        {
+            holoScale(Inc, vec(-1))   
+        }
+        #holoModel(Inc, "hqsphere")
+        Stack:pushNumber(Inc)
+        Angles:pushAngle(ang(random(-1,1)))
+    }
+    
+    function vector get_center_point()
+    {
+        local Vec = vec()
+        
+        foreach(K, V:number=Stack)
+        {
+            Vec += holoEntity(V):pos()   
+        }
+        
+        Vec = Vec / Stack:count()
+        
+        return Vec
+    }
+    runOnTick(1)
+    timer("ticker", 1)
+    timer("creator", 1)
+    timer("center", 1)
+    
+    function void set_light1()
+    {
+        FOG_TICKER = 20
+        FOG_SPAWN_DELAY = 500
+        #FOG_CENTER_CALC_DELAY = 800
+        FOG_SCALE_I = vec(0.01)
+    }
+    
+    function void set_light2()
+    {
+        set_light1()
+        FOG_SPAWN_DELAY = 500   
+    }
+    
+    function void set_fog1()
+    {
+        FOG_TICKER = 200
+        FOG_SCALE_I = vec(0.1)
+    }
+    
+    function void set_fog2()
+    {
+        set_fog1()
+        FOG_SCALE_I = vec(0.5)
+    }
+    
+    function void set_fog3()
+    {
+        FOG_TICKER = 200
+        FOG_SCALE_I = vec(1)   
+        FOG_ALPHA_I = 5
+    }
+    
+    if(!FOG_TICKER) {FOG_TICKER = 200}
+    if(!FOG_SPAWN_DELAY) {FOG_SPAWN_DELAY = 700} 
+    if(!FOG_CENTER_CALC_DELAY) {FOG_CENTER_CALC_DELAY = 500}
+    if(!FOG_SCALE_I) {FOG_SCALE_I = vec(0.01)}
+    if(!FOG_ALPHA_I) {FOG_ALPHA_I = 0.1}
+    
+    set_fog3()
+}
+
+if(clk("center"))
+{
+    timer("center", 500)
+    Center = get_center_point()   
+}
+
+if(clk("creator"))
+{
+    if(I < 40)
+    {
+        I++   
+        timer("creator", 700)      
+        create_simple_fog()
+    }
+    else
+    {
+        #Wind = vec(Wind:x(), Wind:y(), 25)   
+    }
+}
+
+if(clk("ticker"))
+{
+    timer("ticker", FOG_TICKER)
+    #timer("ticker", 20)   
+    #timer("ticker", 1)
+    foreach(K, V:number = Stack)
+    {
+        local E = holoEntity(V)
+        holoPos(V, E:pos() + Wind + vector_random(1) + (E:pos() - Center):normalized()*2)   
+        holoAlpha(V, E:getAlpha() - FOG_ALPHA_I)
+    
+        holoScale(V, holoScale(V) + FOG_SCALE_I * (holoScale(V):x() > 0 ? 1 : -1))
+        holoColor(V, vec(E:getAlpha(), E:getAlpha()/2,0))
+        holoAng(V, E:angles() + Angles:angle(K))
+        if(E:getAlpha() < 1)
+        {
+            holoScale(V, vec(1))
+            holoDelete(V)   
+            holo_back_id(V)
+            Stack:removeNumber(K)
+            Angles:removeAngle(K)
+            I--
+            timer("creator", 100)  
+        }
+    }
+}

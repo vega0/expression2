@@ -1,0 +1,156 @@
+@name Keypad
+@inputs EGP:wirelink User:entity
+@outputs State
+@trigger all
+
+@persist [KeypadIds St]:array [Text Pass]:string I1 I2
+
+if(first() || dupefinished())
+{
+    #include "include/indexmanager"
+    EGP:egpClear()   
+    
+    I1 = e_alloc() #background
+    EGP:egpBox(I1, vec2(360, 256), vec2(200, 350))
+    EGP:egpColor(I1, vec(70,255,100))
+    
+    I2 = e_alloc()
+    EGP:egpBox(I2, vec2(0,-128), vec2(180, 50))
+    EGP:egpColor(I2, vec(140,255,140))
+    EGP:egpParent(I2, I1)
+    
+    KeypadIds = e_alloc(12)
+    Other = e_alloc(12)
+    foreach(K, V:number = KeypadIds)
+    {
+        EGP:egpBox(V, vec2(21*K,21*K) + EGP:egpPos(I1), vec2(20,20))   
+    }
+    
+    for(I = 0, 3)
+    {
+        for(J = 1, 3)
+        {
+            local Ind = I*3+J
+            local DD = KeypadIds:number(Ind)
+            local Pos = vec2(55*J,55*I) + EGP:egpPos(I1) - EGP:egpSize(I1)/2 + vec2(-10,130)
+            
+            EGP:egpBox(DD, Pos, vec2(50,50)) 
+            EGP:egpColor(DD, vec(0,0,255))
+            
+            DD = Other:number(Ind)
+            
+            EGP:egpText(DD, "" + Ind, Pos)
+            EGP:egpSize(DD, 24)
+            EGP:egpAlign(DD, 1, 1)
+        }   
+    }
+    
+    EGP:egpSetText(24, "C")
+    EGP:egpSetText(25, "0")
+    EGP:egpSetText(26, "E")
+    
+    
+    I1 = e_alloc()
+    EGP:egpText(I1, "Enter", vec2())
+    EGP:egpParent(I1, I2)
+    EGP:egpAlign(I1, 1, 1)
+    EGP:egpColor(I1, vec())
+    EGP:egpSize(I1, 48)
+    Pass = "0000"
+    
+    function string text_to_stars(Str:string)
+    {
+        local S = ""
+        
+        for(I = 1, Str:length())
+        {
+            S += "*"   
+        }   
+        return S
+    }
+} 
+
+if(changed(User:keyUse()) && User:keyUse())
+{
+    local Cur = EGP:egpCursor(User)
+    
+    foreach(K, V:number = KeypadIds)
+    {
+        local B1 = EGP:egpPos(V) - EGP:egpSize(V) / 2
+        local B2 = EGP:egpPos(V) + EGP:egpSize(V) / 2
+        
+        if(inrange(Cur, B1, B2))
+        {
+            local En = V-2
+            
+            if(Text == "Enter")
+            {
+                Text = ""   
+            }
+            
+            if(En == 10) #erase
+            {
+                Text = Text:left(Text:length()-1)  
+                EGP:egpSetText(I1, text_to_stars(Text))
+            }
+            elseif(En==12) #Submit
+                {
+                    if(Text == Pass)  
+                    {
+                        timer("door_open", 1)
+                        Text = "Granted!"
+                        EGP:egpColor(I1, vec(0,255,0))
+                    }
+                    else
+                    {
+                        timer("door_open", 500)
+                        Text = "Denied!" 
+                        EGP:egpColor(I1, vec(255,0,0))    
+                    }
+                    EGP:egpSetText(I1, Text)
+                }
+            elseif(Text:length() < 4)
+            {
+                if(En==11) #Zero
+                {
+                    Text += "0"   
+                }
+                else
+                {
+                    Text += "" + En  
+                }
+                
+                EGP:egpSetText(I1, text_to_stars(Text))
+            } 
+            entity():soundPlay(1, 1, "ui/buttonclick.wav")
+            
+            EGP:egpColor(V, vec(255,0,0))
+            St:pushNumber(V)
+            timer("reset", 100)
+            
+        }
+    }
+}
+
+if(clk("reset"))
+{
+    while(St:count() > 0)
+    {
+        EGP:egpColor(St:shiftNumber(), vec(0,0,255))   
+    }
+}
+
+if(clk("door_open"))
+{
+    timer("door_close", 1000)  
+    
+    State = 1 
+}
+
+if(clk("door_close"))
+{
+    EGP:egpColor(I1, vec())
+    Text = "Enter"
+    EGP:egpSetText(I1, Text)
+    State = 0
+}

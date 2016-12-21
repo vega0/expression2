@@ -1,0 +1,52 @@
+function void find_filter_include_classes(Classes:array)
+{
+    foreach(K, V:string = Classes)
+    {
+        findIncludeClass(V)   
+    }   
+}
+
+function void find_filter_exclude_classes(Classes:array)
+{
+    foreach(K, V:string = Classes)
+    {
+        findExcludeClass(V)   
+    }   
+}
+
+function array find_by_class(Class:string)
+{
+    findIncludePlayerProps(owner())
+    findByClass(Class)
+    findExcludePlayerProps(owner())
+    return findToArray()
+}
+
+function array find_by_classes(Classes:array)
+{
+    findIncludePlayerProps(owner())
+    foreach(K, V:string = Classes)
+    {
+        print(V)
+        findIncludeClass(V)   
+    }   
+    find()
+    foreach(K, V:string = Classes)
+    {
+        findExcludeClass(V)   
+    }   
+    findExcludePlayerProps(owner())
+    
+    return findToArray()
+
+}
+
+function array find_by_class_in_radius(Class:string, Radius:number)
+{
+    findIncludeClass(Class)
+    findInSphere(entity():pos(), Radius)
+    findExcludeClass(Class) 
+    return findToArray()
+}
+
+

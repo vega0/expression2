@@ -1,0 +1,137 @@
+@name HoloEasy V1.1
+@trigger none
+@persist HOLO_LOCK1
+
+@persist H_CurrentObject:entity [H_Data H_Names]:table H_CurrentUse:string
+
+#include "include/chatcommands"
+if(!HOLO_LOCK1 || first())
+{
+    #include "include/indexmanager"
+    #include "include/arrayutils"
+    function entity h_easy_ungrab()
+    {
+        if(H_CurrentObject:isValid())
+        {
+            local E = H_CurrentObject
+            E:setColor(vec(255))
+            E:setAlpha(255)
+            H_CurrentObject = noentity()
+            return E
+        }
+        return noentity()
+    }
+    function entity entity:h_easy_grab()
+    {
+        if(H_CurrentObject != This)
+        {
+            if(h_easy_ungrab())
+            {
+                info_print("Ungrabbed old entry.")   
+            }
+            H_CurrentObject = This
+            This:setColor(vec(0,255,0))
+            This:setAlpha(155)
+            return This
+        }   
+    }
+    function number h_easy_create(Name:string, Pos:vector, Ang:angle, Scale:vector, Color:vector)
+    {
+        H_Data:pushArray(array(Name, H_CurrentObject:toLocal(Pos), Ang, Scale, Color))
+        local Id = holo_get_id()
+        holoCreate(Id, Pos, Scale, Ang, Color)
+        holoParent(Id, H_CurrentObject)
+        holoAlpha(Id, 200)
+        H_Names[Name, number] = Id
+        return Id
+        
+    }
+    function number h_easy_rotate(Name:string, Ang:angle)
+    {
+        for(K = 1, H_Data:count())
+        {
+            local V = H_Data[K, array]
+            if(V:string(1) == Name)
+            {
+                local Obj = V
+                if(Obj:count() > 0)
+                {
+                    local Id = H_Names[Name, number]   
+                    local Ang = holoEntity(Id):toWorld(Ang)
+                    holoAng(Id, Ang)
+                    Obj[3, angle] = Ang
+                }  
+            }
+        } 
+    }
+    function number h_easy_use(Name:string)
+    {
+        for(K = 1, H_Data:count())
+        {
+            local V = H_Data[K, array]
+            if(V:string(1) == Name)
+            {
+                H_CurrentUse = Name   
+                return 1
+            }   
+        }  
+        return 0
+    }
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "dump")
+        {
+            printTable(H_Data)
+            return   
+        }
+        if(Cmd == "set")
+        {
+            local AimEntity = Ply:aimEntity()
+            
+            if(AimEntity:isValid())
+            {  
+                if(AimEntity:h_easy_grab())
+                {
+                    info_print(AimEntity:model() + " Grabbed") 
+                }
+            }
+            else{error_print("Nothing to grab!") return}
+            local Name = Args:shiftString()
+            if(Name:length() > 0)
+            {
+                h_easy_create(Name, Ply:aimPos(), AimEntity:angles(), vec(1), vec(100))
+                H_CurrentUse = Name
+                info_print("Using '" + H_CurrentUse + "'!")
+            }   
+            else{error_print("Set name!") return}
+            
+            return
+        }  
+        if(Cmd == "use")
+        {
+            local Name = Args:shiftString()
+            
+            if(h_easy_use(Name))
+            {
+                info_print("Using '" + H_CurrentUse + "'!")
+            }
+            else{error_print("Bad Name '" + Name + "'!") return}
+        }
+        if(Cmd == "m")
+        {
+            Cmd = Args:shiftString()
+            
+            if(Cmd == "rotp")
+            {
+                local Pitch = Args:shiftString():toNumber()
+                if(Pitch)
+                {
+                    h_easy_rotate(H_CurrentUse, ang(Pitch, 0, 0))
+                }
+                return
+            }  
+            return 
+        }
+    }
+    HOLO_LOCK1 = 1   
+}

@@ -1,0 +1,62 @@
+@name CarController
+@trigger Light Mouse1 Mouse2 R_
+
+@inputs Pod:wirelink Light Space Mouse1 Mouse2 R_ Base:entity
+@outputs Lights Stops [L R]:vector
+
+@persist LMode RMode Lock1 Lock2 RLColor:vector
+interval(25)
+
+if(!Lock2 || first() || dupefinished())
+{   
+    Lock2 = 1
+    #runOnTick(1)
+    
+    RLColor = vec(255,100,0)
+}
+
+if(changed(Light) && Light)
+{
+    Lights = !Lights   
+}
+
+Stops = Space*255
+if(Mouse1 || Mouse2 || R_)
+{
+    if(!Lock1)
+    {
+        stoptimer("lr") 
+    }
+    timer("lr", 1)   
+}
+
+if(!Lock1)
+{
+    if(changed(Mouse1) && Mouse1)
+    {
+        LMode = !LMode, RMode = 0
+        L = vec() R = vec()
+    }
+    
+    if(changed(Mouse2) && Mouse2)
+    {
+        RMode = !RMode, LMode = 0   
+        R = vec() L = vec()
+    }
+}
+if(changed(R_) && R_)
+{
+    Lock1 = !Lock1
+    RMode = Lock1, LMode = Lock1
+    L = vec() R = vec()
+}
+
+if(clk("lr"))
+{
+    if(RMode || LMode)
+    {
+        timer("lr", 500)   
+    }   
+    if(RMode){if(R == RLColor){R = vec()}else{R = RLColor}}
+    if(LMode){if(L == RLColor){L = vec()}else{L = RLColor}}
+}

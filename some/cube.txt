@@ -1,0 +1,73 @@
+@name Cube
+@persist Scale Collect:array Bi I
+if(first())
+{
+    #include "include/indexmanager"
+    
+    Scale = 4
+    
+    function void create_cube(Pos:vector)
+    {
+        local Id =   holo_get_id()
+
+        local Base = holoCreate(Id, Pos, vec(1), ang(), vec(255,0,0))
+        holoScale(Id, vec(0.6))
+        holoRenderFX(Id, 16)
+        Bi = Id
+        holoMaterial(Id, "")
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(-1,-1,0)*Scale), vec(0.1, 0.1, 1), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(1,-1,0)*Scale), vec(0.1, 0.1, 1), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(-1,1,0)*Scale), vec(0.1, 0.1, 1), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(1,1,0)*Scale), vec(0.1, 0.1, 1), ang(), vec())
+        
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(1,0,1)*Scale), vec(0.2, 1, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(-1,0,1)*Scale), vec(0.2, 1, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(1,0,-1)*Scale), vec(0.2, 1, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(-1,0,-1)*Scale), vec(0.2, 1, 0.2), ang(), vec())
+        
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(0,1,1)*Scale), vec(1, 0.2, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(0,1,-1)*Scale), vec(1, 0.2, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(0,-1,1)*Scale), vec(1, 0.2, 0.2), ang(), vec())
+        Id = holo_get_id()
+        Collect:pushNumber(Id)
+        holoCreate(Id, Base:toWorld(vec(0,-1,-1)*Scale), vec(1, 0.2, 0.2), ang(), vec())
+        
+        foreach(K, V:number = Collect)
+        {
+            holoParent(V, Bi)   
+        }
+        
+        holoParent(Bi, entity())
+        
+    }   
+    
+    create_cube(entity():pos()+vec(0,0,50))
+    
+    runOnTick(1)
+}
+I++
+
+holoAng(Bi, ang(sin(I)*45, cos(I)*45, tan(I)))
+

@@ -1,0 +1,245 @@
+@persist Ts_Pods:array [Ts_Locations Ts_Queue]:table
+#Some constants
+@persist [TS_TELEPORT_MODEL TS_FILE_PREFIX TS_SOUND_IDLE TS_SOUND_WARP TS_SOUND_CREATED TS_SOUND_TIMEOUT]:string 
+@persist [TS_OFFSET]:vector
+@persist TS_FILE_OK TS_QUEUE TS_TIMEOUT
+@persist TsLock
+
+if(!TsLock)
+{
+    TsLock = 1
+    runOnTick(1)
+    runOnFile(1)
+    
+    #ifndef void assert(number, string)
+        #include "include/debugtools"
+    #endif
+    
+    #ifndef array find_by_class_in_radius(string, number)
+        #include "include/findutils"
+    #endif
+    
+    if(!TS_TELEPORT_MODEL)
+    {
+        TS_TELEPORT_MODEL = "models/maxofs2d/hover_rings.mdl"   
+    }
+    
+    if(!TS_FILE_PREFIX)
+    {
+        TS_FILE_PREFIX = "tele_"   
+    }
+    
+    if(!TS_SOUND_IDLE)
+    {
+        TS_SOUND_IDLE = "ambient/machines/lab_loop1.wav"   
+    }
+    
+    if(!TS_SOUND_WARP)
+    {
+        TS_SOUND_WARP = "ambient/levels/citadel/zapper_loop1.wav"  
+    }
+    
+    if(!TS_SOUND_CREATED)
+    {
+        TS_SOUND_CREATED = "ambient/levels/citadel/zapper_warmup1.wav"   
+    }
+    
+    if(!TS_SOUND_TIMEOUT)
+    {
+        TS_SOUND_TIMEOUT = "ambient/levels/citadel/pod_close1.wav"   
+    }
+    
+    if(!TS_TIMEOUT)
+    {
+        TS_TIMEOUT = 7 * 1000   
+    }
+    
+    if(!TS_OFFSET)
+    {
+        TS_OFFSET = vec(90,0,0)   
+    }
+    
+    Ts_Pods = find_by_class_in_radius("gmod_wire_pod", 500)
+    
+    if(Ts_Pods:count() > 0)
+    {
+        print("Pods found! " + Ts_Pods:count())   
+    }
+    
+    function string ts_get_file_name()
+    {
+        return TS_FILE_PREFIX + hash(map()) + ".txt"
+    }
+    
+    function void ts_save()
+    {
+        if(fileCanWrite())
+        {
+            local FileName = ts_get_file_name()
+            info_print("Saving: " + FileName)
+            #fileWrite(FileName, jsonEncode(Ts_Locations, 2))
+            fileWrite(FileName, vonEncode(Ts_Locations))
+        }
+        else
+        {
+            error_print("Cannot save Locations now... why?")   
+        }
+    }
+    
+    function void ts_set(Name:string, Vector:vector) {Ts_Locations[Name, vector] = Vector ts_save()}
+    function void ts_remove(Name:string) {Ts_Locations:removeVector(Name) ts_save()}
+    function void ts_wipe() {Ts_Locations = table() ts_save()}
+    
+    
+    function vector ts_loc_to_vec(Name:string)
+    {
+        return Ts_Locations[Name, vector]
+    }
+    
+    function wirelink get_first_valid()
+    {
+        for(K = 1, Ts_Pods:count())
+        {
+            V = Ts_Pods:entity(K)
+            
+            local W = V:wirelink()
+            if(W:entity("Entity"):isValid())
+            {
+                return W
+            }
+        }
+    }
+    
+    function number entity:warp_to(Vector:vector)
+    {
+        if(Ts_Pods:count() < 1)
+        {
+            warn_print("Teleport system have no seats!")   
+            
+            return 0
+        }
+        
+        
+        local W = get_first_valid()
+        
+        local Seat = W:entity("Entity")
+            
+        if(!Vector)
+        {
+            error_print("[TS] Vector not valid")
+            return 0   
+        }
+            
+        if(!Seat:isValid())
+        {
+            error_print("[TS] Seat not valid")   
+            return 0 
+        }
+            
+        #Spawn Teleport Model (as indicator!)
+        local TeleModel = propSpawn(TS_TELEPORT_MODEL, Seat:toWorld(vec(0,0,20)), ang(), 1)
+        TeleModel:propNotSolid(1)
+        TeleModel:parentTo(Seat)
+        local Id = TeleModel:id()
+        Seat:propFreeze(1)
+        #ifdef entity:propDraw(number)
+            Seat:propDraw(0)
+        #endif
+        #Seat:setAlpha(100)
+        Seat:setPos(This:toWorld(vec(50,0,20)))  
+        #ifdef noCollideAll(entity, number)
+            noCollideAll(Seat, 1)
+        #endif
+        Ts_Queue:pushArray(array(W, Seat, Vector, TeleModel))
+        TS_QUEUE = 1
+        timer("teleport_timeout_"+Seat:id(), TS_TIMEOUT)
+        
+        #Play sounds after
+        TeleModel:soundPlay("teleport_idle_"+Id, 0, TS_SOUND_IDLE)
+        TeleModel:soundPlay("teleport_created_"+Id, 0, TS_SOUND_CREATED)
+        
+        return 1
+    }
+    
+    function number entity:warp_to(Name:string)
+    {
+        This:warp_to(ts_loc_to_vec(Name))
+    }
+    
+    fileLoad(ts_get_file_name())
+}
+
+if(TS_QUEUE)
+{
+    if(Ts_Queue:count() > 0)
+    {
+        for(K = 1, Ts_Queue:count())
+        {
+            local V = Ts_Queue[K, array]
+            local E = V:entity(2)
+            local T = V:entity(4)
+            
+            if(clk("teleport_timeout_"+E:id()))
+            {
+                soundStop("teleport_idle_"+T:id())
+                E:soundPlay("teleport_timeout_"+E:id(), 1, TS_SOUND_TIMEOUT)
+                T:propDelete()
+                Ts_Queue:remove(K)
+                
+                continue
+            }
+            
+            if(E:driver())
+            {
+ 
+                if(E:pos():distance(V:vector(3) + TS_OFFSET) > 10)
+                {
+                    E:setPos(V:vector(3) + TS_OFFSET)
+                    E:setAng(ang())
+                    
+                }
+                else
+                {
+
+                    soundStop("teleport_idle_"+T:id())
+                    E:soundPlay("teleport_warp_"+E:id(), 1, TS_SOUND_WARP)
+                    T:propDelete()
+                    V[1, wirelink]["Eject", number] = 1 
+                    Ts_Queue:remove(K)
+                }        
+            }
+        }   
+    }
+    else
+    {
+        TS_QUEUE = 0
+    }
+}
+
+if(fileClk())
+{
+    #Checking it by prefix
+    if(fileName():find(TS_FILE_PREFIX))
+    {
+        info_print(fileName() + " loaded!")
+        local Content = fileRead()
+        if(Content)
+        {
+            #Ts_Locations = jsonDecode(Content)
+            Ts_Locations = vonDecodeTable(Content)
+            if(!vonError())
+            {
+                TS_FILE_OK = 1
+            }
+        }
+        else
+        {
+            info_print("Cannot to load the Locations data!")   
+        }
+    }   
+    else
+    {
+        warn_print("Something else using the File methods? Check it.")   
+    }
+}
+

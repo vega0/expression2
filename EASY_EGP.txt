@@ -1,0 +1,42 @@
+This___ = wirelink()
+Pool___ = array()
+
+#initialize pool
+for(I = 1, egpMaxObjects())
+{
+    Pool___:pushNumber(I)
+}
+
+function set_egp( EGP:wirelink )
+{
+    This___ = EGP
+}
+
+function number egp_box(Pos:vector2, Size:vector2)
+{
+    local Index = Pool___:popNumber()
+    This___:egpBox(Index, Pos, Size)
+    return Index   
+}
+
+function number egp_box_outline(Pos:vector2, Size:vector2)
+{
+    local Index = Pool___:popNumber()
+    This___:egpBoxOutline(Index, Pos, Size)   
+    return Index
+}
+
+function number egp_text(Pos:vector2, Text:string)
+{
+    local Index = Pool___:popNumber()
+    This___:egpText(Index, Text, Pos)
+    return Index
+}
+
+
+
+
+
+
+
+

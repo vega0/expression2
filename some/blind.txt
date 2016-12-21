@@ -1,0 +1,124 @@
+@name Blind
+
+@persist B_Data:table
+#constants
+@persist BLIND_FX_ENABLE BLIND_RANDOM_COLOR
+if(first())
+{
+    #ifndef assert(number, string)
+        #include "include/debugtools"
+        DEBUG_DISPLAY_WARNINGS = 1
+    #endif
+    
+    #ifndef void:holo_get_id(void)
+        #include "include/indexmanager"
+    #endif
+    
+    #ifndef vector vector_random(number)
+        #include "include/vectorutils"
+    #endif
+}
+
+#ifndef entity cc_find(string)
+    #include "include/chatcommands"
+#endif
+
+
+if(first())
+{
+    function number entity:isBlind()
+    {
+        return B_Data[""+This:id(), array]:count() > 0 ? 1 : 0   
+    }
+    function void entity:create_blind()
+    {
+        local Arr = B_Data[""+This:id(), array]
+        if(Arr:count() < 1)
+        {
+            local Ids = array(holo_get_id(), 
+                holo_get_id(), holo_get_id())
+            B_Data[""+This:id(), array] = Ids
+            
+            for(I = 1, Ids:count())
+            {
+                holoCreate(Ids:number(I), 
+                    This:attachmentPos("eyes"), 
+                    vec(1,1,1) *-7/I,
+                    This:attachmentAng("eyes"),
+                    vec(0,255,0),
+                    "sphere")
+                holoParentAttachment(Ids:number(I), This, "eyes")
+            }
+            #sholoScale(Ids:number(1), vec(1,1,1) * 7)
+            
+            if(BLIND_FX_ENABLE)
+            {
+                holoRenderFX(Ids:number(1), 15)
+            }
+            if(!BLIND_RANDOM_COLOR)
+            {
+                timer("blind_rand", 1)
+            }
+        }   
+    }     
+
+    function void entity:remove_blind()
+    {
+        local Ids = B_Data[""+This:id(), array]
+        
+        if(Ids)
+        {
+            foreach(K, V:number = Ids)   
+            {
+                holoDelete(V)
+                holo_back_id(V)
+            }
+            B_Data:remove(""+This:id())
+        }
+    }  
+
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "blind" || Cmd == "unblind")
+        {
+            local Target = cc_find(Args:shiftString())
+            
+            if(Target:isValid())
+            {
+                if(Cmd == "blind")
+                {
+                    Target:create_blind()
+                }
+                elseif(Cmd == "unblind")
+                {
+                    Target:remove_blind()
+                }
+            }   
+            return
+        }
+        
+        if(Cmd == "unblindall")
+        {
+            foreach(K, V:entity = players())
+            {
+                V:remove_blind()   
+            }   
+        }
+    }   
+}
+
+if(clk("blind_rand"))
+{
+    if(B_Data:count() > 0)
+    {
+        timer("blind_rand", 10)
+    }
+    
+    foreach(K, V:array = B_Data)
+    {
+        foreach(K2, V:number = V)
+        {
+            holoColor(V, vector_random_h(255))   
+        }
+    }
+}

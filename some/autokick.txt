@@ -1,0 +1,75 @@
+@name autokick
+@trigger none
+@persist PlayersToKick:array
+#constants
+@persist AUTOKICK_LOCK1
+if(!AUTOKICK_LOCK1 || first())
+{
+    PLAYERS_CALLBACKS_ENABLED = 1
+    #ifndef assert(number, string)
+        #include "include/debugtools"
+    #endif
+    DEBUG_PREFIX = "Autokick "
+    function void entity:kick()
+    {
+        if(This:isPlayer())
+        {
+            local String = "say " + This:name()
+            print(concmd(String))   
+            print(concmd(String))  
+            print(concmd(String))  
+        }
+    }
+    info_print("initialized.")
+}
+
+#include "include/chatcommands"
+#include "include/playersutils"
+
+if(!AUTOKICK_LOCK1 || first())
+{
+    AUTOKICK_LOCK1 = 1   
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "autokick")
+        {
+            local Target = cc_find(Args:shiftString())   
+            if(Target:isValid())
+            {
+                if(!PlayersToKick:find(Target:steamID()))
+                {
+                    info_print("Including '" + Cc_Last_Name + "' To autokick system.")
+                    PlayersToKick:pushString(Target:steamID())
+                    Target:kick()
+                }
+            }
+            return
+        }
+        if(Cmd == "unkick")
+        {
+            local SteamID = Args:shiftString()
+            if(SteamID)
+            {
+                foreach(K, V:string = PlayersToKick)
+                {
+                    if(V:find(SteamID))
+                    {
+                        info_print("Removing '" + SteamID + "'!")
+                        PlayersToKick:remove(K)   
+                        return
+                    }   
+                }
+                error_print("Not found.")
+            }
+            return
+        }
+    }
+    function void player_join(Ply:entity)
+    {
+        print(Ply)
+        if(PlayersToKick:find(Ply:steamID()))
+        {
+            Ply:kick()  
+        }
+    }
+}

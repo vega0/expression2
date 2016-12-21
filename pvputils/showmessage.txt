@@ -1,0 +1,146 @@
+@persist [Textscreens]:array
+@persist SM_DELAY SHOW_MESSAGE_POSITION_OFFSET:vector SHOW_MESSAGE_ANGLE_OFFSET:angle
+
+@persist SmLock
+
+#initialize callback for TM include
+if(!SmLock)
+{
+    function void temporary_move_callback(Entity:entity)
+    {
+        print(Entity)
+        Textscreens:pushEntity(Entity)   
+    }
+}
+
+#ifndef void entity:temporary_move(vector, angle, number)
+    #include "include/entity/temporarymove"
+#endif
+
+if(!SmLock)
+{
+    SmLock = 1
+    #ifndef array find_by_class_in_radius(string, number)
+        #include "include/findutils"
+    #endif
+    
+    #ifndef void assert(number, string)
+        #include "include/debugtools"
+    #endif
+    
+    Msg_Have = 0
+    SM_DELAY = 2 * 1000 # 2 seconds
+    
+    TEMPORARY_MOVE_CALLBACK_ENABLED = 1 #turn on callback
+
+    #########################################################
+    
+    Textscreens = find_by_class_in_radius("gmod_wire_textscreen", 500)
+    
+    if(Textscreens:count() > 0)
+    {
+        print("Text screens found!", Textscreens:count())   
+    }
+
+    #########################################################
+    
+    if(!SHOW_MESSAGE_POSITION_OFFSET)
+    {
+        SHOW_MESSAGE_POSITION_OFFSET = vec(30,0,40)
+    }
+    
+    if(!SHOW_MESSAGE_ANGLE_OFFSET)
+    {
+        SHOW_MESSAGE_ANGLE_OFFSET = ang(-45,180,0)
+    }
+    
+    function void entity:send_to(Scr:entity, Delay)
+    {
+        if(Scr:isValid())
+        {
+            #ifdef entity:propNotSolid(number)
+                Scr:propNotSolid(1)
+            #endif
+            
+            Scr:temporary_move(This:toWorld(vec(30,0,40)), This:toWorld(ang(-45,180,0)), Delay)
+            
+            Scr:soundPlay("message", 0, "buttons/lever7.wav", 0)
+
+        }  
+    }
+    
+    function void entity:message_show(Text:string, Seconds)
+    {
+        if(!This:isValid() || !This:isPlayer())
+        {
+            return   
+        }   
+        
+        local Screen = Textscreens:shiftEntity()
+        if(Screen:isValid())
+        {
+            local Link = Screen:wirelink()
+            Link["String", string] = Text
+            Link["FGColor", vector] = vec(255,255,255)
+            Screen:setAlpha(255)
+            
+            This:send_to(Screen, Seconds)
+        }
+        else
+        {
+            warn_print("No text screens! (message_show)")   
+        }
+    }
+    
+    function void entity:message_showc(Text:string, Seconds, Color:vector)
+    {
+        if(!This:isValid() || !This:isPlayer())
+        {
+            return   
+        }   
+        
+        local Screen = Textscreens:shiftEntity()
+        
+        if(Screen:isValid())
+        {
+            local Link = Screen:wirelink()
+            Link["String", string] = Text
+            Link["FGColor", vector] = Color
+            Screen:setAlpha(255)
+            
+            This:send_to(Screen, Seconds)
+        }
+        else
+        {
+            warn_print("No text screens! (message_showc)")   
+        }
+    }
+    
+    function void entity:message_show_static(Text:string)
+    {
+        if(!This:isValid() || !This:isPlayer())
+        {
+            return   
+        }   
+        
+        local Screen = Textscreens:entity(1)
+        
+        if(Screen:isValid())
+        {
+            local Link = Screen:wirelink()
+            Link["String", string] = Text
+            Link["FGColor", vector] = vec(255,100,0)
+            Screen:setAlpha(255)
+            
+            Screen:setPos(This:toWorld(SHOW_MESSAGE_POSITION_OFFSET))
+            Screen:setAng(This:toWorld(SHOW_MESSAGE_ANGLE_OFFSET))
+        }
+        else
+        {
+            warn_print("No text screens!! (message_show_static)")   
+        }
+        
+    }
+}
+
+

@@ -1,0 +1,78 @@
+@persist [Tm_Props Tm_Poses Tm_Angles]:array Tm_Start TEMPORARY_MOVE_CALLBACK_ENABLED
+
+if(first())
+{
+    runOnTick(1)
+    
+    #function void temporary_move_callback(Entity:entity) 
+    #{
+    #    error("Temporary move callback enabled, but callback not defined? (void temporary_move_callback(entity))")
+    #}
+    
+    function number entity:temporary_move(Vector:vector, Angle:angle, Seconds:number)
+    {
+        if(!This:isValid())
+        {
+            return 0
+        }
+        This:propFreeze(1)
+        This:setAlpha(0)
+        This:setAng(Angle)
+        This:setPos(Vector)
+        This:setAlpha(255)
+        
+        #ifdef noCollideAll(entity, number)
+            noCollideAll(This, 1)
+        #endif
+        
+        Tm_Props:pushEntity(This)
+        Tm_Poses:pushVector(This:pos())
+        Tm_Angles:pushAngle(This:angles())
+        timer("tm_check", Seconds * 1000)
+        Tm_Start = 1
+    }   
+    
+    entity():isWeldedTo():temporary_move(owner():pos() + vec(0,0,20), owner():angles(), 3)
+}
+
+if(Tm_Start)
+{
+    if(clk("tm_check"))
+    {        
+        if(Tm_Props:count() > 0)
+        {
+            timer("tm_check", 10)
+            
+            foreach(K, V:entity = Tm_Props)
+            {
+                local Alpha = V:getAlpha()
+                if(Alpha > 0)
+                {
+                    V:setAlpha(Alpha - 5)   
+                }   
+                else
+                {
+                    local Pos = Tm_Poses:vector(K) 
+                    local Ang = Tm_Angles:angle(K)
+                    
+                    V:setPos(Pos)
+                    V:setAng(Ang)
+                    V:setAlpha(255)
+                    
+                    Tm_Poses:remove(K)
+                    Tm_Props:remove(K)  
+                    Tm_Angles:remove(K)
+                    
+                    if(TEMPORARY_MOVE_CALLBACK_ENABLED)
+                    {
+                        temporary_move_callback(V)
+                    }
+                }
+            }
+        }   
+        else
+        {
+            Tm_Start = 0   
+        }
+    }   
+}

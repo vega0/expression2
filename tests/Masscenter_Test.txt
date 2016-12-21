@@ -1,0 +1,9 @@
+@name MassCenter Test
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+runOnTick(1)
+
+entity():isWeldedTo():applyForce(entity():isWeldedTo():massCenter())

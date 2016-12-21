@@ -1,0 +1,13 @@
+#ifdef seatSpawn(string, vector, angle, number)
+
+if(Cmd == "spawn")
+{
+    Cmd = Args:shiftString()
+    
+    if(Cmd == "deathchair")
+    {
+        local Chair = seatSpawn("models/props_c17/FurnitureChair001a.mdl", Ply:aimPos()+vec(0,0,20), ang(), 0)   
+    }   
+}
+
+#endif

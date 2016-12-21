@@ -1,0 +1,33 @@
+@name Most
+@trigger none
+
+@persist MODEL:string
+@persist [StartEnt EndEnt]:entity
+#debug
+@persist Holos:array
+
+#include "include/chatcommands"
+
+if(first())
+{
+    #include "include/indexmanager"
+    
+    MODEL = "models/props_junk/PushCart01a.mdl"
+    function entity create_segment()
+    {
+        return propSpawn(MODEL, owner():aimPos(), ang(), 0)   
+    }
+    
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "create")
+        {
+            StartEnt = create_segment()
+            
+        }
+        elseif(Cmd == "end")
+        {
+            
+        }
+    }
+}

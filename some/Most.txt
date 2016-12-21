@@ -1,0 +1,77 @@
+@name Most
+@trigger none
+
+@persist MODEL:string DISTANCE SI EI
+@persist [StartEnt EndEnt]:entity
+#debug
+@persist Holos:array
+
+#include "include/chatcommands"
+
+if(first())
+{
+    #include "include/indexmanager"
+    
+    DISTANCE = 10
+    MODEL = "models/props_junk/PushCart01a.mdl"
+    
+    function entity create_segment()
+    {
+        local Ent = propSpawn(MODEL, owner():aimPos()+vec(0,0,50), ang(), 0) 
+        local I = holo_get_id()
+        holoCreate(I, Ent:pos(), vec(1), ang(), vec(255), "sphere")
+        Holos:pushNumber(I)
+        return Ent
+    }
+    
+    function void command_handler(Cmd:string, Ply:entity, Args:array)
+    {
+        if(Cmd == "start")
+        {
+            StartEnt = create_segment()
+            SI = holo_get_id()
+            holoCreate(SI)
+            
+        }
+        elseif(Cmd == "end")
+        {
+            EndEnt = create_segment()
+            EI = holo_get_id()
+            holoCreate(EI)
+        }
+    }
+    runOnTick(1)
+    timer("check_clk", 1)
+    
+    local I = holo_get_id()
+    holoCreate(I)
+    Holos:pushNumber(I)
+    local I = holo_get_id()
+    holoCreate(I)
+    Holos:pushNumber(I)
+}
+
+#holoPos(SI, StartEnt:pos())
+#holoPos(EI, EndEnt:pos())
+
+if(clk("check_clk"))
+{
+    timer("check_clk", 100)
+
+    local Seg = vec()
+        
+    foreach(K, V:number = Holos)
+    {
+        Seg += holoEntity(V):pos()   
+    }
+        
+    Seg += StartEnt:pos() + EndEnt:pos()
+    Seg = Seg/Holos:count() + 2
+        
+    foreach(K, V:number = Holos)
+    {
+        holoPos(V, Seg * K)   
+    }
+
+ 
+}
